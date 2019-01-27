@@ -1,40 +1,41 @@
+/* tslint:disable */
 import 'reflect-metadata';
-import * as express from 'express';
-import { Injector } from './Injector';
+import { GenericClassDecorator, Injector, Type } from '@dunai/core';
+import express from 'express';
 
 export function getRoutes(controller: any) {
-    let routes = [];
+    //const routes = [];
     return controller['_routes'];//Reflect.getMetadata('meta', controller);
 }
 
 export class ActionMeta {
-    methods: string[]     = [];
-    path: string | RegExp = '/';
-    action: string        = null;
-
-    bind(router: express.Router, controller: any) {
-//        console.log(`Bind ${this.methods} ${this.path} to ${this.action}`);
+    public methods: string[]     = [];
+    public path: string | RegExp = '/';
+    public action: string        = null;
+    public bind(router: any, controller: any) {
+        //public bind(router: express.Router, controller: any) {
+        console.log(`Bind ${this.methods} ${this.path} to ${this.action}`);
         if (this.methods.length)
-            this.methods.forEach(method => router[method](this.path, (req, res) => controller[this.action](req, res)));
+            this.methods.forEach(method => router[method](this.path, (req: any, res: any) => controller[this.action](req, res)));
         else
-            router.all(this.path, (req, res) => controller[this.action](req, res));
+            router.all(this.path, (req: any, res: any) => controller[this.action](req, res));
     }
 }
 
 export class ControllerMeta {
-    routes: ActionMeta[] = [];
+    public routes: ActionMeta[] = [];
 }
 
-export function Controller(name: string = '') {
+export const Controller = (name: string = ''): GenericClassDecorator<Type<any>> => {
+    console.log(`Register controller "${name}"`);
     return (target: any) => {
-//        console.log(`@Controller ${name}`);
         Injector.registerService(target);
     };
-}
+};
 
-export function Action(path: string | RegExp);
-export function Action(method: string, path: string | RegExp);
-export function Action(methods: string[], path: string | RegExp);
+//export function Action(path: string | RegExp);
+//export function Action(method: string, path: string | RegExp);
+//export function Action(methods: string[], path: string | RegExp);
 export function Action(methods: any, path?: any) {
     if (path === void 0) {
         path    = methods;
@@ -44,7 +45,7 @@ export function Action(methods: any, path?: any) {
     if (!Array.isArray(methods))
         methods = [methods];
 
-    return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
+    return (target: any /*object*/, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 //        console.log('New @Action', methods, path, propertyKey);
 
         if (!target['_routes']) {
@@ -56,13 +57,13 @@ export function Action(methods: any, path?: any) {
 
             'checkout', 'connect', 'copy', 'lock', 'merge', 'mkactivity', 'mkcol',
             'move', 'm-search', 'notify', 'propfind', 'proppatch', 'purge',
-            'report', 'search', 'subscribe', 'trace', 'unlock', 'unsubscribe',
+            'report', 'search', 'subscribe', 'trace', 'unlock', 'unsubscribe'
         ];
 
-        let action: ActionMeta = new ActionMeta();
-        action.methods         = methods.filter(method => availableMethods.indexOf(method) !== -1);
-        action.path            = path;
-        action.action          = propertyKey;
+        const action: ActionMeta = new ActionMeta();
+        action.methods           = methods.filter((method: string) => availableMethods.indexOf(method) !== -1);
+        action.path              = path;
+        action.action            = propertyKey;
         (target['_routes'] as ActionMeta[]).push(action);
 
         return descriptor;
