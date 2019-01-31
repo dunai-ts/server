@@ -1,10 +1,9 @@
 import { Injector, Service } from '@dunai/core';
-import { rejects } from 'assert';
 import express from 'express';
 import { RequestHandlerParams } from 'express-serve-static-core';
 import * as http from 'http';
 
-import { ActionMeta } from './Router';
+import { ActionMeta } from './Common';
 
 @Service()
 export class HttpServer {
@@ -17,17 +16,19 @@ export class HttpServer {
         if (typeof controller !== 'object')
             throw new Error('Api must be already initialized');
 
-        if (!('_routes' in controller) || !Array.isArray(controller._routes)) {
-            console.log(`${controller}`);
-            throw new Error(`Api must decorated by @Controller`);
+        if (!('_routes' in controller) || typeof controller._routes !== 'object') {
+            console.log(`Error in controller "${controller.constructor.toString()}"`);
+            throw new Error(`Controller must be decorated by @Controller`);
         }
 
-        const actions: ActionMeta[] = controller._routes.map((item: any) => {
-            if (item instanceof ActionMeta)
-                return item;
-            else
-                throw new Error(`Action must be decorated by @Action`);
-        });
+        const actions: ActionMeta[] = Object.keys(controller._routes).map(
+            i => {
+                const item = controller._routes[i];
+                if (item instanceof ActionMeta)
+                    return item;
+                else
+                    throw new Error(`Action must be decorated by @Action`);
+            });
 
         return actions;
     }

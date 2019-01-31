@@ -1,29 +1,11 @@
 /* tslint:disable */
 import 'reflect-metadata';
 import { GenericClassDecorator, Injector, Type } from '@dunai/core';
-import express from 'express';
+import { ActionMeta, ControllerMeta, IRouteParam, RouteParamType } from './Common';
 
 export function getRoutes(controller: any) {
     //const routes = [];
     return controller['_routes'];//Reflect.getMetadata('meta', controller);
-}
-
-export class ActionMeta {
-    public methods: string[]     = [];
-    public path: string | RegExp = '/';
-    public action: string        = null;
-    public bind(router: any, controller: any) {
-        //public bind(router: express.Router, controller: any) {
-        console.log(`Bind ${this.methods} ${this.path} to ${this.action}`);
-        if (this.methods.length)
-            this.methods.forEach(method => router[method](this.path, (req: any, res: any) => controller[this.action](req, res)));
-        else
-            router.all(this.path, (req: any, res: any) => controller[this.action](req, res));
-    }
-}
-
-export class ControllerMeta {
-    public routes: ActionMeta[] = [];
 }
 
 export const Controller = (name: string = ''): GenericClassDecorator<Type<any>> => {
@@ -33,24 +15,24 @@ export const Controller = (name: string = ''): GenericClassDecorator<Type<any>> 
     };
 };
 
-//export function Action(path: string | RegExp);
-//export function Action(method: string, path: string | RegExp);
-//export function Action(methods: string[], path: string | RegExp);
+export function Action(path: string | RegExp);
+export function Action(method: string, path: string | RegExp);
+export function Action(methods: string[], path: string | RegExp);
 export function Action(methods: any, path?: any) {
     if (path === void 0) {
-        path    = methods;
+        path = methods;
         methods = [];
     }
 
     if (!Array.isArray(methods))
         methods = [methods];
 
-    return (target: any /*object*/, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
-//        console.log('New @Action', methods, path, propertyKey);
+    methods = methods.map(m => m.toLowerCase());
 
-        if (!target['_routes']) {
-            target['_routes'] = [];
-        }
+    return (controller: Type<any>, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
+        const target = checkController(controller);
+
+        console.log('New @Action', target, methods, path, propertyKey);
 
         const availableMethods = [
             'all', 'get', 'post', 'put', 'delete', 'patch', 'options', 'head',
@@ -61,11 +43,87 @@ export function Action(methods: any, path?: any) {
         ];
 
         const action: ActionMeta = new ActionMeta();
-        action.methods           = methods.filter((method: string) => availableMethods.indexOf(method) !== -1);
-        action.path              = path;
-        action.action            = propertyKey;
-        (target['_routes'] as ActionMeta[]).push(action);
+        action.methods = methods.filter((method: string) => availableMethods.indexOf(method) !== -1);
+        action.path = path;
+        action.action = propertyKey;
+        target['_routes'][propertyKey] = action;
 
         return descriptor;
     };
 }
+
+function addRouteParam(type: RouteParamType, key: string) {
+    return (controller: Type<any>, propertyKey: string, index: number) => {
+        const target = checkController(controller);
+
+        if (!(propertyKey in target._route_params))
+            target._route_params[propertyKey] = [];
+
+        target._route_params[propertyKey][index] = {
+            type, key
+        };
+    };
+}
+
+export function Path(key: string) {
+    return addRouteParam(RouteParamType.Path, key);
+}
+
+export function Query(key: string) {
+    return addRouteParam(RouteParamType.Query, key);
+}
+
+export function Body(key?: string) {
+    return addRouteParam(RouteParamType.Body, key);
+}
+
+function checkController<T>(target: Type<T>): Type<T> & ControllerMeta {
+    if (!target['_routes'])
+        target['_routes'] = {};
+
+    if (!target['_route_params'])
+        target['_route_params'] = {};
+
+    return target as any;
+}
+
+/*
+let data = {
+    ada    : 'asdasdasdasd',
+    asdsgdf: '65uyhtfhg'
+};
+
+class FFF {
+    public dfg = {
+        dfgd: 'asdafgasd',
+        tf  : 'sdfsd'
+    };
+
+    get index() {
+        return data;
+    }
+}
+
+function FFF1(data: any) {
+    this.dfg = {
+        dfgd: 'asdafgasd',
+        tf  : 'sdfsd'
+    };
+    Object.defineProperty(this, 'index', {
+        get(): any {
+            return data;
+        }
+    });
+}
+
+const gg = new FFF;
+
+console.log(gg);
+console.log(JSON.stringify(gg, null, 2));
+
+const gg1 = new FFF1(data);
+
+console.log(gg1);
+console.log(JSON.stringify(gg1, null, 2));
+
+ */

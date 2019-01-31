@@ -16,6 +16,13 @@
       true,
       "dev"
     ],
+    "object-literal-sort-keys": [
+      true,
+      "ignore-case",
+      "locale-compare",
+      "match-declaration-order",
+      "shorthand-first"
+    ],
     /* tslint-immutable rules */
     // Recommended built-in rules
     "no-var-keyword": true,
@@ -29,12 +36,12 @@
     "readonly-array": false,
     "no-let": false,
     "no-object-mutation": false,
-    "no-delete": true,
-    "no-method-signature": true,
+    "no-delete": false,
+    "no-method-signature": false,
     // Functional style rules
     "no-this": false,
     "no-class": false,
-    "no-mixed-interface": true,
+    "no-mixed-interface": false,
     "no-expression-statement": [
       false,
       {
