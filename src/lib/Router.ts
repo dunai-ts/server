@@ -1,7 +1,7 @@
 /* tslint:disable */
 import 'reflect-metadata';
 import { GenericClassDecorator, Injector, Type } from '@dunai/core';
-import { ActionMeta, ControllerMeta, IRouteParam, RouteParamType } from './Common';
+import { ActionMeta, ControllerMeta, EntitySource, IRouteParam, RouteParamType } from './Common';
 
 export function getRoutes(controller: any) {
     //const routes = [];
@@ -52,6 +52,17 @@ export function Action(methods: any, path?: any) {
     };
 }
 
+export function Entity(entity: EntitySource) {
+    return (controller: Type<any>, propertyKey: string, index: number) => {
+        const target = checkController(controller);
+
+        if (!(propertyKey in target._route_entity))
+            target._route_entity[propertyKey] = [];
+
+        target._route_entity[propertyKey][index] = entity;
+    };
+}
+
 function addRouteParam(type: RouteParamType, key: string) {
     return (controller: Type<any>, propertyKey: string, index: number) => {
         const target = checkController(controller);
@@ -65,11 +76,11 @@ function addRouteParam(type: RouteParamType, key: string) {
     };
 }
 
-export function Path(key: string) {
+export function Path(key?: string) {
     return addRouteParam(RouteParamType.Path, key);
 }
 
-export function Query(key: string) {
+export function Query(key?: string) {
     return addRouteParam(RouteParamType.Query, key);
 }
 
@@ -83,6 +94,9 @@ function checkController<T>(target: Type<T>): Type<T> & ControllerMeta {
 
     if (!target['_route_params'])
         target['_route_params'] = {};
+
+    if (!target['_route_entity'])
+        target['_route_entity'] = {};
 
     return target as any;
 }
