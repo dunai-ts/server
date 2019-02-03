@@ -1,18 +1,18 @@
-import { Application, Injector } from '@dunai/core';
-import { Request } from 'express';
+import {  Injector } from '@dunai/core';
+import bodyParser from 'body-parser';
+import { Request, Response } from 'express';
 import { describe, it } from 'mocha';
-import * as request from 'request';
 import should from 'should';
+import { Application, createApp } from './Application';
+import { EntityError } from './Common';
 import { HttpServer } from './HttpServer';
 import { Action, Body, Controller, Entity, Path, Query } from './Router';
 import { fetch } from './utils.spec';
-import bodyParser = require('body-parser');
-import { ActionMeta, EntityError } from './Common';
 
 @Application()
 class App {
     constructor(public server?: HttpServer) {
-        this.server.use(bodyParser.json());
+        this.server.use(bodyParser.json() as any);
     }
 
     public init(): void {
@@ -24,7 +24,7 @@ class App {
 @Controller('Ping controller')
 class DefaultController {
     @Action('/')
-    public index(req: any, res: any) {
+    public index(req: any, res: any): void {
         return res.json({
             ping: 'ok'
         });
@@ -34,25 +34,101 @@ class DefaultController {
 @Controller('API controller')
 class ApiController {
     @Action(['put', 'get'], '/:id')
-    public index(req: any, res: any) {
+    public index(req: any, res: any): void {
         return res.json({
             api: 'ok'
         });
     }
 }
 
-let app: App;
-
 describe('Router service', () => {
-    beforeEach(() => {
-        Injector.reset();
+    describe('Controller', () => {
+        it('standard controller', () => {
+            @Controller()
+            class TestController {
+                @Action('/')
+                public index() {
+                    // ok
+                }
+            }
+
+            @Application()
+            class TestApp {
+                constructor(public server?: HttpServer) { }
+            }
+
+            const app = createApp(TestApp) as any;
+
+            app.server.registerController('/', TestController);
+
+            should(app).ok();
+        });
+        //it('prepared controller', () => {
+        //    @Controller()
+        //    class TestController {
+        //        @Action('/')
+        //        public index() {
+        //            // ok
+        //        }
+        //    }
+        //
+        //    const controller = new TestController()
+        //
+        //    @Application()
+        //    class TestApp {
+        //        constructor(public server?: HttpServer) { }
+        //    }
+        //
+        //    const app = createApp(TestApp) as any;
+        //
+        //    app.server.registerController('/', controller);
+        //    app.server.registerController('/api', controller);
+        //
+        //    should(app).ok();
+        //});
+        it('error if controller not contains actions', () => {
+            @Controller()
+            class TestController {
+            }
+
+            @Application()
+            class TestApp {
+                constructor(public server?: HttpServer) {
+                    server.registerController('/', TestController);
+                }
+            }
+
+            should(() => createApp(TestApp)).throw('Controller must be decorated by @Controller\n' +
+                '  and must contain at least one action');
+        });
+        it('no decorated controller', () => {
+            class TestController {
+
+            }
+
+            @Application()
+            class TestApp {
+                constructor(server?: HttpServer) {
+                    server.registerController('/', TestController);
+                }
+            }
+
+            should(() => createApp(TestApp)).throw('Controller must be decorated by @Controller\n' +
+                '  and must contain at least one action');
+        });
     });
 
-    afterEach(async () => {
-        await app.server.close();
-    });
+    describe('Params', () => {
+        let app: App;
 
-    describe('params', () => {
+        beforeEach(() => {
+            Injector.reset();
+        });
+
+        afterEach(async () => {
+            await app.server.close();
+        });
+
         it('default (req, res)', async () => {
             @Controller('Test controller')
             class TestController {
@@ -65,11 +141,14 @@ describe('Router service', () => {
                 }
             }
 
-            app = new App();
+            app = createApp(App);
             app.server.registerController('/test', TestController);
             await app.server.listen(3000);
 
-            const result = await fetch('put', 'http://127.0.0.1:3000/test/a?foo=foo');
+            const result = await fetch(
+                'put',
+                'http://127.0.0.1:3000/test/a?foo=foo'
+            );
             should(result).eql({
                 status: 200,
                 body  : {
@@ -90,11 +169,14 @@ describe('Router service', () => {
                 }
             }
 
-            app = new App();
+            app = createApp(App);
             app.server.registerController('/test', TestController);
             await app.server.listen(3000);
 
-            const result = await fetch('put', 'http://127.0.0.1:3000/test/a?foo=foo');
+            const result = await fetch(
+                'put',
+                'http://127.0.0.1:3000/test/a?foo=foo'
+            );
             should(result).eql({
                 status: 200,
                 body  : {
@@ -115,11 +197,14 @@ describe('Router service', () => {
                 }
             }
 
-            app = new App();
+            app = createApp(App);
             app.server.registerController('/test', TestController);
             await app.server.listen(3000);
 
-            const result = await fetch('put', 'http://127.0.0.1:3000/test/a?foo=foo');
+            const result = await fetch(
+                'put',
+                'http://127.0.0.1:3000/test/a?foo=foo'
+            );
             should(result).eql({
                 status: 200,
                 body  : {
@@ -132,7 +217,11 @@ describe('Router service', () => {
             @Controller('Test controller')
             class TestController {
                 @Action('patch', '/:id')
-                public index(req: any, @Path() id: object, @Query('foo') foo: string): void {
+                public index(
+                    req: any,
+                    @Path() id: object,
+                    @Query('foo') foo: string
+                ): void {
                     return req.res.json({
                         id,
                         foo,
@@ -141,11 +230,14 @@ describe('Router service', () => {
                 }
             }
 
-            app = new App();
+            app = createApp(App);
             app.server.registerController('/test', TestController);
             await app.server.listen(3000);
 
-            const result = await fetch('patch', 'http://127.0.0.1:3000/test/a?foo=bar');
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a?foo=bar'
+            );
             should(result).eql({
                 status: 200,
                 body  : {
@@ -159,7 +251,11 @@ describe('Router service', () => {
             @Controller('Test controller')
             class TestController {
                 @Action('patch', '/:id')
-                public index(req: any, @Path('id') id: string, @Body('foo') foo: string): void {
+                public index(
+                    req: any,
+                    @Path('id') id: string,
+                    @Body('foo') foo: string
+                ): void {
                     return req.res.json({
                         id,
                         foo,
@@ -168,15 +264,19 @@ describe('Router service', () => {
                 }
             }
 
-            app = new App();
+            app = createApp(App);
             app.server.registerController('/test', TestController);
             await app.server.listen(3000);
 
-            const result = await fetch('patch', 'http://127.0.0.1:3000/test/a', {
-                foo: {
-                    obj: 'bar'
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a',
+                {
+                    foo: {
+                        obj: 'bar'
+                    }
                 }
-            });
+            );
             should(result).eql({
                 status: 200,
                 body  : {
@@ -192,7 +292,11 @@ describe('Router service', () => {
             @Controller('Test controller')
             class TestController {
                 @Action('patch', '/:id')
-                public index(req: any, @Path('id') id: string, @Body() body: string): void {
+                public index(
+                    req: any,
+                    @Path('id') id: string,
+                    @Body() body: string
+                ): void {
                     return req.res.json({
                         id,
                         body,
@@ -201,15 +305,19 @@ describe('Router service', () => {
                 }
             }
 
-            app = new App();
+            app = createApp(App);
             app.server.registerController('/test', TestController);
             await app.server.listen(3000);
 
-            const result = await fetch('patch', 'http://127.0.0.1:3000/test/a', {
-                foo: {
-                    obj: 'bar'
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a',
+                {
+                    foo: {
+                        obj: 'bar'
+                    }
                 }
-            });
+            );
             should(result).eql({
                 status: 200,
                 body  : {
@@ -226,9 +334,19 @@ describe('Router service', () => {
     });
 
     describe('Entity in params', () => {
+        let app: App;
+
+        beforeEach(() => {
+            Injector.reset();
+        });
+
+        afterEach(async () => {
+            await app.server.close();
+        });
+
         it('Sync getter (req, @Entity @Path, @Body)', async () => {
             class Test {
-                static findByPk(id: string): Test {
+                public static findByPk(id: string): Test {
                     return new Test({ id });
                 }
 
@@ -242,7 +360,11 @@ describe('Router service', () => {
             @Controller('Test controller')
             class TestController {
                 @Action('patch', '/:id')
-                public index(req: any, @Entity(Test) @Path('id') path: string, @Body('foo') foo: string): void {
+                public index(
+                    req: any,
+                    @Entity(Test) @Path('id') path: string,
+                    @Body('foo') foo: string
+                ): void {
                     return req.res.json({
                         path,
                         foo,
@@ -251,15 +373,19 @@ describe('Router service', () => {
                 }
             }
 
-            app = new App();
+            app = createApp(App);
             app.server.registerController('/test', TestController);
             await app.server.listen(3000);
 
-            const result = await fetch('patch', 'http://127.0.0.1:3000/test/a', {
-                foo: {
-                    obj: 'bar'
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a',
+                {
+                    foo: {
+                        obj: 'bar'
+                    }
                 }
-            });
+            );
             should(result).eql({
                 status: 200,
                 body  : {
@@ -275,9 +401,9 @@ describe('Router service', () => {
         });
         it('Promise (req, @Entity @Path, @Body)', async () => {
             class Test {
-                static findByPk(id: string): Promise<Test> {
+                public static findByPk(id: string): Promise<Test> {
                     return new Promise<Test>((resolve, reject) => {
-                        setTimeout(() => resolve(new Test({ id })), 100);
+                        setTimeout(() => resolve(new Test({ id })), 10);
                     });
                 }
 
@@ -291,7 +417,11 @@ describe('Router service', () => {
             @Controller('Test controller')
             class TestController {
                 @Action('patch', '/:id')
-                public index(req: any, @Entity(Test) @Path('id') path: string, @Body('foo') foo: string): void {
+                public index(
+                    req: any,
+                    @Entity(Test) @Path('id') path: string,
+                    @Body('foo') foo: string
+                ): void {
                     return req.res.json({
                         path,
                         foo,
@@ -300,15 +430,19 @@ describe('Router service', () => {
                 }
             }
 
-            app = new App();
+            app = createApp(App);
             app.server.registerController('/test', TestController);
             await app.server.listen(3000);
 
-            const result = await fetch('patch', 'http://127.0.0.1:3000/test/a', {
-                foo: {
-                    obj: 'bar'
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a',
+                {
+                    foo: {
+                        obj: 'bar'
+                    }
                 }
-            });
+            );
             should(result).eql({
                 status: 200,
                 body  : {
@@ -324,9 +458,9 @@ describe('Router service', () => {
         });
         it('Promise - unhandled error (req, @Entity @Path, @Body)', async () => {
             class Test {
-                static findByPk(id: string): Promise<Test> {
+                public static findByPk(id: string): Promise<Test> {
                     return new Promise<Test>((resolve, reject) => {
-                        setTimeout(() => reject('Not found'), 100);
+                        setTimeout(() => reject('Not found'), 10);
                     });
                 }
 
@@ -340,7 +474,11 @@ describe('Router service', () => {
             @Controller('Test controller')
             class TestController {
                 @Action('patch', '/:id')
-                public index(req: any, @Entity(Test) @Path('id') path: string, @Body('foo') foo: string): void {
+                public index(
+                    req: any,
+                    @Entity(Test) @Path('id') path: string,
+                    @Body('foo') foo: string
+                ): void {
                     return req.res.json({
                         path,
                         foo,
@@ -349,15 +487,19 @@ describe('Router service', () => {
                 }
             }
 
-            app = new App();
+            app = createApp(App);
             app.server.registerController('/test', TestController);
             await app.server.listen(3000);
 
-            const result = await fetch('patch', 'http://127.0.0.1:3000/test/a', {
-                foo: {
-                    obj: 'bar'
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a',
+                {
+                    foo: {
+                        obj: 'bar'
+                    }
                 }
-            });
+            );
             should(result).eql({
                 status: 404,
                 body  : 'Not found'
@@ -365,9 +507,9 @@ describe('Router service', () => {
         });
         it('Promise - handled error (req, @Entity @Path, @Body)', async () => {
             class Test {
-                static findByPk(id: string): Promise<Test> {
+                public static findByPk(id: string): Promise<Test> {
                     return new Promise<Test>((resolve, reject) => {
-                        setTimeout(() => reject('Invalid ID'), 100);
+                        setTimeout(() => reject('Invalid ID'), 10);
                     });
                 }
 
@@ -381,9 +523,11 @@ describe('Router service', () => {
             @Controller('Test controller')
             class TestController {
                 @Action('patch', '/:id')
-                public index(req: any,
-                             @Entity(Test) @Path('id') path: Test,
-                             @Body('foo') foo: object): void {
+                public index(
+                    req: any,
+                    @Entity(Test) @Path('id') path: Test,
+                    @Body('foo') foo: object
+                ): void {
                     return req.res.json({
                         path,
                         foo,
@@ -391,9 +535,12 @@ describe('Router service', () => {
                     });
                 }
 
-                public error(req: Request, res: Response, error: EntityError): void {
-                    console.log('ERROR: ', error);
-                    req.res.status(400).json({
+                public error(
+                    _: Request,
+                    res: Response,
+                    error: EntityError
+                ): void {
+                    res.status(400).json({
                         error : error.message,
                         action: error.meta.action,
                         params: error.params
@@ -401,21 +548,344 @@ describe('Router service', () => {
                 }
             }
 
-            app = new App();
+            app = createApp(App);
             app.server.registerController('/test', TestController);
             await app.server.listen(3000);
 
-            const result = await fetch('patch', 'http://127.0.0.1:3000/test/a', {
-                foo: {
-                    obj: 'bar'
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a',
+                {
+                    foo: {
+                        obj: 'bar'
+                    }
                 }
-            });
+            );
             should(result).eql({
                 status: 400,
                 body  : {
                     error : 'Invalid ID',
                     action: 'index',
-                    params: ['[request]', 'a', { obj: 'bar' }],
+                    params: ['[request]', 'a', { obj: 'bar' }]
+                }
+            });
+        });
+        it('error before create Promise - handled error (req, @Entity @Path, @Body)', async () => {
+            class TError extends Error {
+                public details: string = 'some details';
+            }
+
+            class Test {
+                public static findByPk(id: string): Promise<Test> {
+                    throw new TError('Test error');
+
+                    return new Promise<Test>((resolve, reject) => {
+                        setTimeout(() => reject('Invalid ID'), 10);
+                    });
+                }
+
+                public id: string;
+
+                constructor(data?: any) {
+                    Object.assign(this, data);
+                }
+            }
+
+            @Controller('Test controller')
+            class TestController {
+                @Action('patch', '/:id')
+                public index(
+                    req: any,
+                    @Entity(Test) @Path('id') path: Test,
+                    @Body('foo') foo: object
+                ): void {
+                    return req.res.json({
+                        path,
+                        foo,
+                        test: 'ok'
+                    });
+                }
+
+                public error(
+                    _: Request,
+                    res: Response,
+                    error: EntityError
+                ): void {
+                    res.status(400).json({
+                        error  : error.message,
+                        details: error['details'],
+                        action : error.meta.action,
+                        params : error.params
+                    });
+                }
+            }
+
+            app = createApp(App);
+            app.server.registerController('/test', TestController);
+            await app.server.listen(3000);
+
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a',
+                {
+                    foo: {
+                        obj: 'bar'
+                    }
+                }
+            );
+            should(result).eql({
+                status: 400,
+                body  : {
+                    error  : 'Test error',
+                    details: 'some details',
+                    action : 'index',
+                    params : ['[request]', 'a', { obj: 'bar' }]
+                }
+            });
+        });
+        it('function - handled error (req, @Entity @Path, @Body)', async () => {
+            function findByPk(id: string): Promise<Test> {
+                return new Promise<Test>((resolve, reject) => {
+                    setTimeout(() => reject('Invalid ID'), 10);
+                });
+            }
+
+            class Test {
+                public id: string;
+
+                constructor(data?: any) {
+                    Object.assign(this, data);
+                }
+            }
+
+            @Controller('Test controller')
+            class TestController {
+                @Action('patch', '/:id')
+                public index(
+                    req: any,
+                    @Entity(findByPk) @Path('id') path: Test,
+                    @Body('foo') foo: object
+                ): void {
+                    return req.res.json({
+                        path,
+                        foo,
+                        test: 'ok'
+                    });
+                }
+
+                public error(
+                    _: Request,
+                    res: Response,
+                    error: EntityError
+                ): void {
+                    res.status(400).json({
+                        error : error.message,
+                        action: error.meta.action,
+                        params: error.params
+                    });
+                }
+            }
+
+            app = createApp(App);
+            app.server.registerController('/test', TestController);
+            await app.server.listen(3000);
+
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a',
+                {
+                    foo: {
+                        obj: 'bar'
+                    }
+                }
+            );
+            should(result).eql({
+                status: 400,
+                body  : {
+                    error : 'Invalid ID',
+                    action: 'index',
+                    params: ['[request]', 'a', { obj: 'bar' }]
+                }
+            });
+        });
+        it('error in function - handled error (req, @Entity @Path, @Body)', async () => {
+            function findByPk(id: string): Promise<Test> {
+                throw new Error('throw error');
+
+                return new Promise<Test>((resolve, reject) => {
+                    setTimeout(() => reject('Invalid ID'), 10);
+                });
+            }
+
+            class Test {
+                public id: string;
+
+                constructor(data?: any) {
+                    Object.assign(this, data);
+                }
+            }
+
+            @Controller('Test controller')
+            class TestController {
+                @Action('patch', '/:id')
+                public index(
+                    req: any,
+                    @Entity(findByPk) @Path('id') path: Test,
+                    @Body('foo') foo: object
+                ): void {
+                    return req.res.json({
+                        path,
+                        foo,
+                        test: 'ok'
+                    });
+                }
+
+                public error(
+                    _: Request,
+                    res: Response,
+                    error: EntityError
+                ): void {
+                    res.status(400).json({
+                        error : error.message,
+                        action: error.meta.action,
+                        params: error.params
+                    });
+                }
+            }
+
+            app = createApp(App);
+            app.server.registerController('/test', TestController);
+            await app.server.listen(3000);
+
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a',
+                {
+                    foo: {
+                        obj: 'bar'
+                    }
+                }
+            );
+            should(result).eql({
+                status: 400,
+                body  : {
+                    error : 'throw error',
+                    action: 'index',
+                    params: ['[request]', 'a', { obj: 'bar' }]
+                }
+            });
+        });
+        it('real error in promise function - handled error (req, @Entity @Path, @Body)', async () => {
+            function findByPk(id: string): Promise<string> {
+                return new Promise(resolve => {
+                    const g: string = null;
+                    resolve(g.substr(0, 10));
+                });
+            }
+
+            @Controller('Test controller')
+            class TestController {
+                @Action('patch', '/:id')
+                public index(
+                    req: any,
+                    @Entity(findByPk) @Path('id') path: string,
+                    @Body('foo') foo: object
+                ): void {
+                    return req.res.json({
+                        path,
+                        foo,
+                        test: 'ok'
+                    });
+                }
+
+                public error(
+                    _: Request,
+                    res: Response,
+                    error: EntityError
+                ): void {
+                    res.status(400).json({
+                        error : error.message,
+                        action: error.meta.action,
+                        params: error.params
+                    });
+                }
+            }
+
+            app = createApp(App);
+            app.server.registerController('/test', TestController);
+            await app.server.listen(3000);
+
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a',
+                {
+                    foo: {
+                        obj: 'bar'
+                    }
+                }
+            );
+            should(result).eql({
+                status: 400,
+                body  : {
+                    error : 'Cannot read property \'substr\' of null',
+                    action: 'index',
+                    params: ['[request]', 'a', { obj: 'bar' }]
+                }
+            });
+        });
+        it('real error in function - handled error (req, @Entity @Path, @Body)', async () => {
+            function findByPk(id: string): string {
+                const g: string = null;
+                return g.substr(0, 10);
+            }
+
+            @Controller('Test controller')
+            class TestController {
+                @Action('patch', '/:id')
+                public index(
+                    req: any,
+                    @Entity(findByPk) @Path('id') path: string,
+                    @Body('foo') foo: object
+                ): void {
+                    return req.res.json({
+                        path,
+                        foo,
+                        test: 'ok'
+                    });
+                }
+
+                public error(
+                    req: Request,
+                    res: Response,
+                    error: EntityError
+                ): void {
+                    res.status(400).json({
+                        error : error.message,
+                        action: error.meta.action,
+                        params: error.params
+                    });
+                }
+            }
+
+            app = createApp(App);
+            app.server.registerController('/test', TestController);
+            await app.server.listen(3000);
+
+            const result = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/test/a',
+                {
+                    foo: {
+                        obj: 'bar'
+                    }
+                }
+            );
+            should(result).eql({
+                status: 400,
+                body  : {
+                    action: 'index',
+                    error : 'Cannot read property \'substr\' of null',
+                    params: ['[request]', 'a', { obj: 'bar' }]
                 }
             });
         });

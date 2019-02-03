@@ -1,6 +1,10 @@
-import { IncomingHttpHeaders } from 'http';
+/**
+ * @module @dunai/server
+ */
 
-export type IHeaders = IncomingHttpHeaders;
+// import { IncomingHttpHeaders } from 'http';
+//
+// export type IHeaders = IncomingHttpHeaders;
 
 // export class Headers {
 //     constructor(headers: IncomingHttpHeaders) {

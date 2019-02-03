@@ -1,7 +1,11 @@
 import request from 'request';
 
 /* tslint:disable */
-export function fetch(method: string, url: string, body?: object): Promise<any> {
+export function fetch(
+    method: string,
+    url: string,
+    body?: object
+): Promise<any> {
     return new Promise((resolve, reject) => {
         const params: any = {
             url,
@@ -13,17 +17,16 @@ export function fetch(method: string, url: string, body?: object): Promise<any> 
             params.json = true;
         }
         request(params, (error: any, res: any, body: any) => {
-            console.log(error, body);
-
             try {
                 body = JSON.parse(body);
-            } catch (_) {
-            }
+            } catch (_) {}
 
-            return error ? reject(error) : resolve({
-                status: res.statusCode,
-                body
-            });
+            return error
+                ? reject(error)
+                : resolve({
+                      status: res.statusCode,
+                      body
+                  });
         });
     });
 }

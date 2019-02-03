@@ -4,12 +4,12 @@
     "tslint-config-prettier",
     "tslint-immutable"
   ],
+  "exclude": [
+    "node_modules/**/*.ts"
+  ],
   "rules": {
     "no-console": false,
-    "interface-name": [
-      true,
-      "never-prefix"
-    ],
+    "interface-name": false,
     // TODO: allow devDependencies only in **/*.spec.ts files:
     // waiting on https://github.com/palantir/tslint/pull/3708
     "no-implicit-dependencies": [
@@ -17,7 +17,7 @@
       "dev"
     ],
     "object-literal-sort-keys": [
-      true,
+      false,
       "ignore-case",
       "locale-compare",
       "match-declaration-order",
@@ -28,9 +28,9 @@
     "no-var-keyword": true,
     "no-parameter-reassignment": true,
     "typedef": [
-      true,
-      "call-signature"
+      true
     ],
+    "no-string-literal": false,
     // Immutability rules
     "readonly-keyword": false,
     "readonly-array": false,

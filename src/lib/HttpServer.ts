@@ -1,10 +1,17 @@
+/**
+ * @module @dunai/server
+ */
+
 import { Injector, Service } from '@dunai/core';
 import express from 'express';
-import { RequestHandlerParams } from 'express-serve-static-core';
 import * as http from 'http';
 
 import { ActionMeta } from './Common';
 
+/**
+ * HTTP server (bases on express.js)
+ * @public
+ */
 @Service()
 export class HttpServer {
     /**
@@ -16,19 +23,21 @@ export class HttpServer {
         if (typeof controller !== 'object')
             throw new Error('Api must be already initialized');
 
-        if (!('_routes' in controller) || typeof controller._routes !== 'object') {
-            console.log(`Error in controller "${controller.constructor.toString()}"`);
-            throw new Error(`Controller must be decorated by @Controller`);
+        if (
+            !('_routes' in controller) ||
+            typeof controller._routes !== 'object'
+        ) {
+            console.log(
+                `Error in controller "${controller.constructor.toString()}"`
+            );
+            throw new Error(`Controller must be decorated by @Controller\n  and must contain at least one action`);
         }
 
-        const actions: ActionMeta[] = Object.keys(controller._routes).map(
-            i => {
-                const item = controller._routes[i];
-                if (item instanceof ActionMeta)
-                    return item;
-                else
-                    throw new Error(`Action must be decorated by @Action`);
-            });
+        const actions: ActionMeta[] = Object.keys(controller._routes).map(i => {
+            const item = controller._routes[i];
+            if (item instanceof ActionMeta) return item;
+            else throw new Error(`Action must be decorated by @Action`);
+        });
 
         return actions;
     }
@@ -48,10 +57,6 @@ export class HttpServer {
      */
     public listen(port: number, hostname: string = '0.0.0.0'): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            //this.express.use((req, res, next) => {
-            //    console.log(req.method, req.url);
-            //    next();
-            //});
             this.express.all('*', (req, res) => {
                 res.status(404).send('Page not found.');
             });
@@ -74,7 +79,7 @@ export class HttpServer {
      * @param {RequestHandlerParams} handlers
      * @return {e.Application}
      */
-    public use(...handlers: RequestHandlerParams[]) {
+    public use(...handlers: any[]): express.Application {
         return this.express.use(...handlers);
     }
 
@@ -105,13 +110,9 @@ export class HttpServer {
 
         const actions = HttpServer.getControllerActions(ctrl);
 
-        console.log(actions);
-
-        if (!actions)
-            return;
+        if (!actions) return;
 
         const router = express.Router();
-        console.log('Apply for ' + url);
 
         actions.forEach(action => action.bind(router, ctrl));
 
