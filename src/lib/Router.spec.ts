@@ -63,7 +63,7 @@ describe('Router service', () => {
 
             should(app).ok();
         });
-        //it('prepared controller', () => {
+        // it('prepared controller', () => {
         //    @Controller()
         //    class TestController {
         //        @Action('/')
@@ -85,7 +85,7 @@ describe('Router service', () => {
         //    app.server.registerController('/api', controller);
         //
         //    should(app).ok();
-        //});
+        // });
         it('error if controller not contains actions', () => {
             @Controller()
             class TestController {

@@ -108,7 +108,7 @@ export class ActionMeta {
                     };
                     if (typeof controller['error'] === 'function') {
                         controller['error'](req, res, error);
-                    } else res.status(404).1    json('Not found');
+                    } else res.status(404).json('Not found');
                 }
             );
         };
