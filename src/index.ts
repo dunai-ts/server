@@ -3,7 +3,7 @@
  * @preferred
  * Server side framework, bases on Express.js
  */
-export * from './lib/Application';
-export * from './lib/HttpServer';
-export * from './lib/Router';
-export * from './lib/Common';
+export * from './Application';
+export * from './HttpServer';
+export * from './Router';
+export * from './Common';

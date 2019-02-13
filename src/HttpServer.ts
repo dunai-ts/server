@@ -35,8 +35,10 @@ export class HttpServer {
 
         const actions: ActionMeta[] = Object.keys(controller._routes).map(i => {
             const item = controller._routes[i];
-            if (item instanceof ActionMeta) return item;
-            else throw new Error(`Action must be decorated by @Action`);
+            if (item instanceof ActionMeta)
+                return item;
+            else
+                throw new Error(`Action must be decorated by @Action`);
         });
 
         return actions;
