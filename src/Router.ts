@@ -174,6 +174,17 @@ export function Body(key?: string) {
 }
 
 /**
+ * Get parameter from body
+ *
+ * If call without parameters return all body parameters
+ * @param key
+ * @decorator
+ */
+export function Session(key?: string) {
+    return addRouteParam(RouteParamType.Session, key);
+}
+
+/**
  * Check controller for hidden parameters
  *
  * If parameter not exists - make it

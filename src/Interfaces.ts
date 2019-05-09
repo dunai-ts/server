@@ -1,6 +1,13 @@
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
+import { SessionData } from './Session';
 
-export interface Request<R, S> extends ExpressRequest {
+export interface Request extends ExpressRequest {
     session_id?: string;
-    session?: S;
+    session?: any;
+}
+
+// tslint:disable-next-line
+export interface Response extends ExpressResponse {
+    session_id?: string;
+    session?: SessionData;
 }

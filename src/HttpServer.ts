@@ -2,11 +2,15 @@
  * @module @dunai/server
  */
 
-import { Injector, Service } from '@dunai/core';
+import { Injector, Service, Type } from '@dunai/core';
 import express from 'express';
 import * as http from 'http';
+import cookieParser from 'cookie-parser';
 
 import { ActionMeta } from './Common';
+import { ISessionStorage, SessionData } from './Session';
+import { Request, Response } from './Interfaces';
+import { deepFreeze } from './utils';
 
 /**
  * HTTP server (bases on express.js)
@@ -46,9 +50,33 @@ export class HttpServer {
 
     public express: express.Application;
     public server: http.Server;
+    public sessionStorage: ISessionStorage;
 
     constructor() {
         this.express = express();
+        this.express.use(cookieParser());
+    }
+
+    public setSessionStorage(sessionKey: any,//(req: express.Request, res: express.Response, next: () => void) => void,
+                             storage: Type<ISessionStorage>) {
+        if (this.sessionStorage)
+            throw new Error('Session storage already exists');
+        if (Array.isArray(sessionKey))
+            this.express.use(...sessionKey);
+        else
+            this.express.use(sessionKey);
+
+        const sessionStorage = Injector.resolve<ISessionStorage>(storage);
+        this.sessionStorage  = sessionStorage;
+        this.express.use((req: Request, res: Response, next: () => void) => {
+            const data  = sessionStorage.get(req.session_id);
+            req.session = deepFreeze(data);
+            res.session = new SessionData(req.session);
+            res.on('finish', () => {
+                sessionStorage.set(req.session_id, res.session.getData(), data);
+            });
+            next();
+        });
     }
 
     /**

@@ -3,16 +3,18 @@
  */
 
 import { Type } from '@dunai/core';
-import { Request, Response, Router } from 'express';
+import { Router } from 'express';
+import { Request, Response } from './Interfaces';
 
 /**
  * Type of route param. Used in param decorators in actions
  * @private
  */
 export enum RouteParamType {
-    Path = 'path',
-    Query = 'query',
-    Body = 'body'
+    Path    = 'path',
+    Query   = 'query',
+    Body    = 'body',
+    Session = 'session',
 }
 
 /**
@@ -29,9 +31,9 @@ export interface IRouteParam {
  * @private
  */
 export class ActionMeta {
-    public methods: string[] = [];
+    public methods: string[]     = [];
     public path: string | RegExp = '/';
-    public action: string = null;
+    public action: string        = null;
     public params: IRouteParam[] = [];
 
     /**
@@ -69,6 +71,14 @@ export class ActionMeta {
                             ? req.body[param.key]
                             : req.body;
                         break;
+                    case RouteParamType.Session:
+                        if (req.session)
+                            params[index] = param.key
+                                ? req.session[param.key]
+                                : req.session;
+                        else
+                            params[index] = undefined;
+                        break;
                 }
             });
 
@@ -96,14 +106,14 @@ export class ActionMeta {
                     if (typeof reject === 'object') reason = reject;
                     else
                         reason = {
-                            name: 'Unknown',
+                            name   : 'Unknown',
                             message: reject
                         };
 
                     const error: EntityError = {
                         ...reason,
                         message: reason.message,
-                        meta: this,
+                        meta   : this,
                         params
                     };
                     if (typeof controller['error'] === 'function') {
@@ -146,4 +156,12 @@ export interface ControllerMeta {
 export interface EntityError extends Error {
     meta: ActionMeta;
     params: any[];
+}
+
+export function onErrorMiddleware(err, req, res) {
+    res.status(500)
+       .set('content-language', 'en')
+       .json({ message: err.message })
+       .end();
+    return res;
 }

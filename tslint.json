@@ -57,6 +57,7 @@
     /* end tslint-immutable rules */
 
     "curly": false,
-    "max-classes-per-file": false
+    "max-classes-per-file": false,
+    "prefer-conditional-expression": false
   }
 }
