@@ -59,7 +59,8 @@
     "cookie-parser": "^1.4.4",
     "express": "^4.16.4",
     "immutable": "^4.0.0-rc.12",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "typescript": "^3.4.5"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.1",

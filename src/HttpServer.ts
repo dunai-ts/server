@@ -3,11 +3,11 @@
  */
 
 import { Injector, Service, Type } from '@dunai/core';
-import express from 'express';
+import express, { Router } from 'express';
 import * as http from 'http';
 import cookieParser from 'cookie-parser';
 
-import { ActionMeta } from './Common';
+import { ActionMeta, ControllerMeta, EntityError } from './Common';
 import { ISessionStorage, SessionData } from './Session';
 import { Request, Response } from './Interfaces';
 import { deepFreeze } from './utils';
@@ -28,8 +28,8 @@ export class HttpServer {
             throw new Error('Api must be already initialized');
 
         if (
-            !('_routes' in controller) ||
-            typeof controller._routes !== 'object'
+            !('_actions' in controller) ||
+            typeof controller._actions !== 'object'
         ) {
             console.log(
                 `Error in controller "${controller.constructor.toString()}"`
@@ -37,8 +37,8 @@ export class HttpServer {
             throw new Error(`Controller must be decorated by @Controller\n  and must contain at least one action`);
         }
 
-        const actions: ActionMeta[] = Object.keys(controller._routes).map(i => {
-            const item = controller._routes[i];
+        const actions: ActionMeta[] = Object.keys(controller._actions).map(i => {
+            const item = controller._actions[i];
             if (item instanceof ActionMeta)
                 return item;
             else
@@ -67,9 +67,9 @@ export class HttpServer {
             this.express.use(sessionKey);
 
         const sessionStorage = Injector.resolve<ISessionStorage>(storage);
-        this.sessionStorage  = sessionStorage;
+        this.sessionStorage = sessionStorage;
         this.express.use((req: Request, res: Response, next: () => void) => {
-            const data  = sessionStorage.get(req.session_id);
+            const data = sessionStorage.get(req.session_id);
             req.session = deepFreeze(data);
             res.session = new SessionData(req.session);
             res.on('finish', () => {
@@ -138,14 +138,54 @@ export class HttpServer {
     public registerController(url: string | RegExp, controller: any): void {
         const ctrl = Injector.resolve<any>(controller);
 
-        const actions = HttpServer.getControllerActions(ctrl);
+        const actions: ActionMeta[] = HttpServer.getControllerActions(ctrl);
 
         if (!actions) return;
 
         const router = express.Router();
 
-        actions.forEach(action => action.bind(router, ctrl));
+        actions.forEach(action => {
+            bind(router, ctrl, []);
+        });
 
         this.express.use(url, router);
     }
+}
+
+/**
+ * Bind action to express
+ * @param router
+ * @param controller
+ */
+function bind(router: Router, controller: Type<any> & ControllerMeta, actionParams: any[]): void {
+    const handler = (req: Request, res: Response) => {
+        const params: any[] = [req, res];
+        Promise.all(params).then(
+            resolved => controller[this.action](...resolved),
+            (reject: Error | string) => {
+                if (params[0] === req) params[0] = '[request]';
+                if (params[1] === res) params[1] = '[response]';
+
+                let reason: Error = null;
+                if (typeof reject === 'object') reason = reject;
+                else
+                    reason = {
+                        name   : 'Unknown',
+                        message: reject
+                    };
+
+                const error: EntityError = {
+                    ...reason,
+                    message: reason.message,
+                    meta   : this,
+                    params
+                };
+                if (typeof controller['error'] === 'function') {
+                    controller['error'](req, res, error);
+                } else res.status(404).json('Not found');
+            }
+        );
+    };
+
+// this.methods.forEach(method => router[method](this.path, handler));
 }

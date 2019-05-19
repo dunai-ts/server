@@ -3,13 +3,7 @@
  */
 import { GenericClassDecorator, Injector, Type } from '@dunai/core';
 import 'reflect-metadata';
-import {
-    ActionMeta,
-    ControllerMeta,
-    EntitySource,
-    IRouteParam,
-    RouteParamType
-} from './Common';
+import { ActionMeta, ControllerMeta, EntitySource, RouteParamType } from './Common';
 
 // /**
 // * @private
@@ -17,7 +11,7 @@ import {
 // */
 // export function getRoutes(controller: any) {
 //    //const routes = [];
-//    return controller['_routes']; //Reflect.getMetadata('meta', controller);
+//    return controller['_actions']; //Reflect.getMetadata('meta', controller);
 // }
 
 /**
@@ -98,25 +92,9 @@ export function Action(methods: any, path?: any) {
         );
         action.path                    = path;
         action.action                  = propertyKey;
-        target['_routes'][propertyKey] = action;
+        target['_actions'][propertyKey] = action;
 
         return descriptor;
-    };
-}
-
-/**
- * Resolve entity by parameter
- * @param entity
- * @decorator
- */
-export function Entity(entity: EntitySource) {
-    return (controller: Type<any>, propertyKey: string, index: number) => {
-        const target = checkController(controller);
-
-        if (!(propertyKey in target._route_entity))
-            target._route_entity[propertyKey] = [];
-
-        target._route_entity[propertyKey][index] = entity;
     };
 }
 
@@ -126,18 +104,38 @@ export function Entity(entity: EntitySource) {
  * @param type
  * @param key
  */
-function addRouteParam(type: RouteParamType, key: string) {
+function addRouteParam(type: RouteParamType, params: {[key:string]: any}) {
     return (controller: Type<any>, propertyKey: string, index: number) => {
         const target = checkController(controller);
 
-        if (!(propertyKey in target._route_params))
-            target._route_params[propertyKey] = [];
+        if (!(propertyKey in target._action_params))
+            target._action_params[propertyKey] = [];
 
-        target._route_params[propertyKey][index] = {
+        if (!(propertyKey in target._action_params[index]))
+            target._action_params[propertyKey][index] = [];
+
+        target._action_params[propertyKey][index].push({
             type,
-            key
-        };
+            params
+        });
     };
+}
+
+/**
+ * Resolve entity by parameter
+ * @param entity
+ * @decorator
+ */
+export function Entity(entity: EntitySource) {
+    return addRouteParam(RouteParamType.Entity, {entity})
+    // return (controller: Type<any>, propertyKey: string, index: number) => {
+    //     const target = checkController(controller);
+    //
+    //     if (!(propertyKey in target._route_entity))
+    //         target._route_entity[propertyKey] = [];
+    //
+    //     target._route_entity[propertyKey][index] = entity;
+    // };
 }
 
 /**
@@ -148,7 +146,7 @@ function addRouteParam(type: RouteParamType, key: string) {
  * @decorator
  */
 export function Path(key?: string) {
-    return addRouteParam(RouteParamType.Path, key);
+    return addRouteParam(RouteParamType.Path, {key});
 }
 
 /**
@@ -159,7 +157,7 @@ export function Path(key?: string) {
  * @decorator
  */
 export function Query(key?: string) {
-    return addRouteParam(RouteParamType.Query, key);
+    return addRouteParam(RouteParamType.Query, {key});
 }
 
 /**
@@ -170,7 +168,7 @@ export function Query(key?: string) {
  * @decorator
  */
 export function Body(key?: string) {
-    return addRouteParam(RouteParamType.Body, key);
+    return addRouteParam(RouteParamType.Body, {key});
 }
 
 /**
@@ -181,7 +179,7 @@ export function Body(key?: string) {
  * @decorator
  */
 export function Session(key?: string) {
-    return addRouteParam(RouteParamType.Session, key);
+    return addRouteParam(RouteParamType.Session, {key});
 }
 
 /**
@@ -192,11 +190,9 @@ export function Session(key?: string) {
  * @param target
  */
 function checkController<T>(target: Type<T>): Type<T> & ControllerMeta {
-    if (!target['_routes']) target['_routes'] = {};
+    if (!target['_actions']) target['_actions'] = {};
 
-    if (!target['_route_params']) target['_route_params'] = {};
-
-    if (!target['_route_entity']) target['_route_entity'] = {};
+    if (!target['_action_params']) target['_action_params'] = {};
 
     return target as any;
 }
