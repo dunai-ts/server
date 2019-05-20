@@ -2,13 +2,17 @@ import { Injector } from '@dunai/core';
 import bodyParser from 'body-parser';
 import { describe, it } from 'mocha';
 import should from 'should';
-import { Application, createApp } from './Application';
-import { EntityError } from './Common';
-import { HttpServer } from './HttpServer';
-import { Request, Response } from './Interfaces';
-import { Action, Body, Controller, Entity, Path, Query, Session } from './Router';
-import { sessionFromCookie, sessionFromHeader, SessionStorageInMemory } from './Session';
-import { fetch } from './utils.spec';
+import { Application, createApp } from '../Application';
+import { EntityError } from '../Common';
+import { Controller } from '../controller/Controller';
+import { Entity } from '../entity/Params';
+import { HttpServer } from '../HttpServer';
+import { Request, Response } from '../Interfaces';
+import { sessionFromCookie, sessionFromHeader, SessionStorageInMemory } from '../Session';
+import { Session } from '../session/Params';
+import { fetch } from '../utils.spec';
+import { Body, Path, Query } from './Params';
+import { Action, Route } from './Router';
 
 @Application()
 class App {
@@ -24,7 +28,7 @@ class App {
 
 @Controller('Ping controller')
 class DefaultController {
-    @Action('/')
+    @Route('/')
     public index(req: any, res: any): void {
         return res.json({
             ping: 'ok'
@@ -34,7 +38,7 @@ class DefaultController {
 
 @Controller('API controller')
 class ApiController {
-    @Action(['put', 'get'], '/:id')
+    @Route(['put', 'get'], '/:id')
     public index(req: any, res: any): void {
         return res.json({
             api: 'ok'
@@ -67,7 +71,7 @@ describe('Router service', () => {
         // it('prepared controller', () => {
         //    @Controller()
         //    class TestController {
-        //        @Action('/')
+        //        @Route('/')
         //        public index() {
         //            // ok
         //        }
@@ -133,7 +137,7 @@ describe('Router service', () => {
         it('default (req, res)', async () => {
             @Controller('Test controller')
             class TestController {
-                @Action('put', '/:id')
+                @Route('put', '/:id')
                 public index(req: any, res: any): void {
                     return res.json({
                         id  : req.params['id'],
@@ -161,7 +165,7 @@ describe('Router service', () => {
         it('default (only req)', async () => {
             @Controller('Test controller')
             class TestController {
-                @Action('put', '/:id')
+                @Route('put', '/:id')
                 public index(req: any): void {
                     return req.res.json({
                         id  : req.params['id'],
@@ -189,7 +193,7 @@ describe('Router service', () => {
         it('default (req, _, @Path(_)', async () => {
             @Controller('Test controller')
             class TestController {
-                @Action('put', '/:id')
+                @Route('put', '/:id')
                 public index(req: any, _, @Path('id') id: string): void {
                     return req.res.json({
                         id,
@@ -217,7 +221,7 @@ describe('Router service', () => {
         it('default (req, @Path(), @Query(_))', async () => {
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Path() id: object,
@@ -251,7 +255,7 @@ describe('Router service', () => {
         it('default (req, @Path, @Body)', async () => {
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Path('id') id: string,
@@ -292,7 +296,7 @@ describe('Router service', () => {
         it('default (req, @Path, @Body - full body)', async () => {
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Path('id') id: string,
@@ -350,7 +354,7 @@ describe('Router service', () => {
             it('without session', async () => {
                 @Controller('Test controller')
                 class TestController {
-                    @Action('put', '/:id')
+                    @Route('put', '/:id')
                     public index(req: Request, res: Response): void {
                         res.json({
                             session_id: req.session_id,
@@ -376,7 +380,7 @@ describe('Router service', () => {
             it('sessionFromHeader', async () => {
                 @Controller('Test controller')
                 class TestController {
-                    @Action('put', '/:id')
+                    @Route('put', '/:id')
                     public index(req: Request, res: Response): void {
                         res.session_id = 'changed_session_id';
                         res.json({
@@ -414,7 +418,7 @@ describe('Router service', () => {
             it('sessionFromCookie', async () => {
                 @Controller('Test controller')
                 class TestController {
-                    @Action('put', '/:id')
+                    @Route('put', '/:id')
                     public index(req: Request, res: Response): void {
                         res.session_id = 'changed_session_id';
                         res.json({
@@ -457,7 +461,7 @@ describe('Router service', () => {
             it('in-memory session', async () => {
                 @Controller('Test controller')
                 class TestController {
-                    @Action(['get', 'put'], '/')
+                    @Route(['get', 'put'], '/')
                     public index(req: Request, res: Response): void {
                         if (req.body)
                             res.session.set(req.body);
@@ -522,7 +526,7 @@ describe('Router service', () => {
             it('default (req, @Session())', async () => {
                 @Controller('Test controller')
                 class TestController {
-                    @Action('put', '/:id')
+                    @Route('put', '/:id')
                     public index(req: Request, @Session() session: any): void {
                         req.res.json({
                             session_id: req.session_id,
@@ -566,7 +570,7 @@ describe('Router service', () => {
             it('default (req, @Session(_))', async () => {
                 @Controller('Test controller')
                 class TestController {
-                    @Action('put', '/:id')
+                    @Route('put', '/:id')
                     public index(req: Request, @Session('foo') foo: any): void {
                         req.res.json({
                             session_id: req.session_id,
@@ -621,7 +625,7 @@ describe('Router service', () => {
             it('without session', async () => {
                 @Controller('Test controller')
                 class TestController {
-                    @Action('put', '/:id')
+                    @Route('put', '/:id')
                     public index(req: Request, res: Response): void {
                         res.json({
                             session_id: req.session_id,
@@ -647,7 +651,7 @@ describe('Router service', () => {
             it('in-memory session', async () => {
                 @Controller('Test controller')
                 class TestController {
-                    @Action('put', '/:id')
+                    @Route('put', '/:id')
                     public index(req: Request, res: Response): void {
                         res.json({
                             session_id: req.session_id,
@@ -679,7 +683,7 @@ describe('Router service', () => {
             it('default (req, @Session())', async () => {
                 @Controller('Test controller')
                 class TestController {
-                    @Action('put', '/:id')
+                    @Route('put', '/:id')
                     public index(req: Request, @Session() session: any): void {
                         req.res.json({
                             session_id: req.session_id,
@@ -711,7 +715,7 @@ describe('Router service', () => {
             it('default (req, @Session(_))', async () => {
                 @Controller('Test controller')
                 class TestController {
-                    @Action('put', '/:id')
+                    @Route('put', '/:id')
                     public index(req: Request, @Session('foo') foo: string): void {
                         req.res.json({
                             session_id: req.session_id,
@@ -766,7 +770,7 @@ describe('Router service', () => {
 
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Entity(Test) @Path('id') path: string,
@@ -823,7 +827,7 @@ describe('Router service', () => {
 
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Entity(Test) @Path('id') path: string,
@@ -880,7 +884,7 @@ describe('Router service', () => {
 
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Entity(Test) @Path('id') path: string,
@@ -929,7 +933,7 @@ describe('Router service', () => {
 
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Entity(Test) @Path('id') path: Test,
@@ -1000,7 +1004,7 @@ describe('Router service', () => {
 
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Entity(Test) @Path('id') path: Test,
@@ -1067,7 +1071,7 @@ describe('Router service', () => {
 
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Entity(findByPk) @Path('id') path: Test,
@@ -1134,7 +1138,7 @@ describe('Router service', () => {
 
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Entity(findByPk) @Path('id') path: Test,
@@ -1192,7 +1196,7 @@ describe('Router service', () => {
 
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Entity(findByPk) @Path('id') path: string,
@@ -1248,7 +1252,7 @@ describe('Router service', () => {
 
             @Controller('Test controller')
             class TestController {
-                @Action('patch', '/:id')
+                @Route('patch', '/:id')
                 public index(
                     req: any,
                     @Entity(findByPk) @Path('id') path: string,

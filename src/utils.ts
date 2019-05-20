@@ -1,3 +1,7 @@
+/**
+ * @module @dunai/server
+ */
+
 export function deepFreeze(obj: object): object {
     Object.keys(obj).forEach((key) => {
         if (typeof obj[key] === 'object')

@@ -6,8 +6,8 @@ import { Injector, Service, Type } from '@dunai/core';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import * as http from 'http';
-import { ActionMeta } from './Common';
 import { Request, Response } from './Interfaces';
+import { RouteMeta } from './router/Common';
 import { ISessionStorage, SessionData } from './Session';
 import { deepFreeze } from './utils';
 
@@ -20,9 +20,9 @@ export class HttpServer {
     /**
      * Get action list of controller
      * @param controller
-     * @return {ActionMeta[]}
+     * @return {RouteMeta[]}
      */
-    public static getControllerActions(controller: any): ActionMeta[] {
+    public static getControllerRoutes(controller: any): RouteMeta[] {
         if (typeof controller !== 'object')
             throw new Error('Api must be already initialized');
 
@@ -36,12 +36,12 @@ export class HttpServer {
             throw new Error(`Controller must be decorated by @Controller\n  and must contain at least one action`);
         }
 
-        const actions: ActionMeta[] = Object.keys(controller._routes).map(i => {
+        const actions: RouteMeta[] = Object.keys(controller._routes).map(i => {
             const item = controller._routes[i];
-            if (item instanceof ActionMeta)
+            if (item instanceof RouteMeta)
                 return item;
             else
-                throw new Error(`Action must be decorated by @Action`);
+                throw new Error(`Route must be decorated by @Route`);
         });
 
         return actions;
@@ -137,7 +137,7 @@ export class HttpServer {
     public registerController(url: string | RegExp, controller: any): void {
         const ctrl = Injector.resolve<any>(controller);
 
-        const actions = HttpServer.getControllerActions(ctrl);
+        const actions = HttpServer.getControllerRoutes(ctrl);
 
         if (!actions) return;
 

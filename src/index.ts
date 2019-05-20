@@ -6,6 +6,6 @@
 
 export * from './Application';
 export * from './HttpServer';
-export * from './Router';
+export * from './router/Router';
 export * from './Common';
 export * from './Interfaces';

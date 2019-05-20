@@ -4,8 +4,9 @@ import {  Injector } from '@dunai/core';
 import { describe, it } from 'mocha';
 import should from 'should';
 import { Application, createApp } from './Application';
+import { Controller } from './controller/Controller';
 import { HttpServer } from './HttpServer';
-import { Action, Controller } from './Router';
+import { Route } from './router/Router';
 import url from 'url';
 import { fetch } from './utils.spec';
 
@@ -21,7 +22,7 @@ class App {
 
 @Controller('Ping controller')
 class DefaultController {
-    @Action('get', '/')
+    @Route('get', '/')
     public index(req: any) {
         const urlInfo = url.parse(req.originalUrl);
 
@@ -38,7 +39,7 @@ class DefaultController {
 
 @Controller('API controller')
 class ApiController {
-    @Action(['put', 'get'], '/:id')
+    @Route(['put', 'get'], '/:id')
     public index(req: any, res: any) {
         const urlInfo = url.parse(req.originalUrl);
 
