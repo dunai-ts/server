@@ -1,7 +1,6 @@
 import { describe, it } from 'mocha';
+import request, { Response } from 'request';
 import should from 'should';
-import request from 'request';
-import { Response } from 'request';
 import { deepFreeze } from './utils';
 
 /* tslint:disable */

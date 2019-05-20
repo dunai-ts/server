@@ -526,7 +526,7 @@ describe('Router service', () => {
                     public index(req: Request, @Session() session: any): void {
                         req.res.json({
                             session_id: req.session_id,
-                            session   : session
+                            session
                         });
                     }
                 }
@@ -683,7 +683,7 @@ describe('Router service', () => {
                     public index(req: Request, @Session() session: any): void {
                         req.res.json({
                             session_id: req.session_id,
-                            session   : session
+                            session
                         });
                     }
                 }

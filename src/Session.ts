@@ -33,8 +33,7 @@ export function sessionFromCookie(
     }) {
     return [
         (req: Request, res: Response, next: any) => {
-            const session_id = req.cookies[cookie];
-            req.session_id   = session_id;
+            req.session_id   = req.cookies[cookie];
             next();
         },
         changeHeadersBeforeSendMiddleware(

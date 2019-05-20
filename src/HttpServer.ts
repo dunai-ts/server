@@ -3,13 +3,12 @@
  */
 
 import { Injector, Service, Type } from '@dunai/core';
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import * as http from 'http';
-import cookieParser from 'cookie-parser';
-
 import { ActionMeta } from './Common';
-import { ISessionStorage, SessionData } from './Session';
 import { Request, Response } from './Interfaces';
+import { ISessionStorage, SessionData } from './Session';
 import { deepFreeze } from './utils';
 
 /**
@@ -57,7 +56,7 @@ export class HttpServer {
         this.express.use(cookieParser());
     }
 
-    public setSessionStorage(sessionKey: any,//(req: express.Request, res: express.Response, next: () => void) => void,
+    public setSessionStorage(sessionKey: any, // (req: express.Request, res: express.Response, next: () => void) => void,
                              storage: Type<ISessionStorage>) {
         if (this.sessionStorage)
             throw new Error('Session storage already exists');
