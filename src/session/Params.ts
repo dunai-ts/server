@@ -1,4 +1,5 @@
 import { addControllerParamDecoration } from '../ParamDecoration';
+import { IDecoratedParamHttpResolveData } from '../router/Common';
 
 export const CONTROLLER_SESSION_PARAM = 'session';
 
@@ -10,5 +11,8 @@ export const CONTROLLER_SESSION_PARAM = 'session';
  * @decorator
  */
 export function Session(key?: string) {
-    return addControllerParamDecoration(CONTROLLER_SESSION_PARAM, key);
+    return addControllerParamDecoration({
+        type       : CONTROLLER_SESSION_PARAM,
+        useFunction: (data: IDecoratedParamHttpResolveData, req: Request) => key ? req['session'][key] : req['session']
+    });
 }

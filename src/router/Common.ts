@@ -20,6 +20,14 @@ export interface ControllerRoutes {
     [key: string]: RouteMeta;
 }
 
+export interface IDecoratedParamHttpResolveData {
+    http?: Request;
+    ws?: any;
+    [key: string]: any;
+}
+
+
+
 /**
  * Route controller metadata
  * @private
@@ -56,50 +64,6 @@ export class RouteMeta {
         const entities = controller._route_entity[this.action] || [];
 
         const handler = (req: Request, res: Response) => {
-            const params: any[] = [req, res];
-
-            this.params.forEach((param, index) => {
-                switch (param.type) {
-                    case ROUTE_PATH_PARAM:
-                        params[index] = param.key
-                            ? req.params[param.key]
-                            : req.params;
-                        break;
-                    case ROUTE_QUERY_PARAM:
-                        params[index] = param.key
-                            ? req.query[param.key]
-                            : req.query;
-                        break;
-                    case ROUTE_BODY_PARAM:
-                        params[index] = param.key
-                            ? req.body[param.key]
-                            : req.body;
-                        break;
-                    case CONTROLLER_SESSION_PARAM:
-                        if (req.session)
-                            params[index] = param.key
-                                ? req.session[param.key]
-                                : req.session;
-                        else
-                            params[index] = undefined;
-                        break;
-                }
-            });
-
-            const prepare = [...params];
-            entities.forEach((entity, index) => {
-                if (typeof entity !== 'function') return;
-
-                try {
-                    // tslint:disable-next-line
-                    if (typeof entity['findByPk'] === 'function')
-                        prepare[index] = entity['findByPk'](params[index]);
-                    else prepare[index] = entity(params[index]);
-                } catch (error) {
-                    prepare[index] = Promise.reject(error);
-                }
-            });
-
             Promise.all(prepare).then(
                 resolved => controller[this.action](...resolved),
                 (reject: Error | string) => {

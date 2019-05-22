@@ -2,18 +2,12 @@
  * @module @dunai/server
  */
 
+import { Type } from '@dunai/core';
+import 'reflect-metadata';
+
 const CONTROLLER_META_KEY = 'dunai:controller';
 
-import { Type } from '@dunai/core';
-// import { Reflect } from 'reflect-metadata';
-import 'reflect-metadata';
-import { Request } from './Interfaces';
-
-export interface IDecoratedParamResolveData {
-    http?: Request;
-    ws?: any;
-    [key: string]: any;
-}
+export type IDecoratedParamResolveData = any;
 
 export type IDecoratedParamResolveFunction = (data: IDecoratedParamResolveData, value?: any) => any;
 
@@ -77,18 +71,27 @@ export function prepareMethod(controller: Type<any>, method: string): IDecorated
     return meta.preparedMethods[method];
 }
 
-export function runMethod(controller: any, method: string) {
+export function runMethod<T>(controller: any, method: string) {
     const params = prepareMethod(controller, method);
 
-    return (data: IDecoratedParamResolveData, ...rest: any[]): any => {
+    return (data: IDecoratedParamResolveData, ...rest: any[]): Promise<T> => {
         while (rest.length > params.length)
             params.push([]);
         const values = [];
         for (let index = 0; index < params.length; index++) {
             const items = params[index] || [];
-            values.push(items.reduce((value, func) => func(data, value), rest[index]));
+            values.push(
+                items.reduce(
+                    (value, func) => value.then(val => func(data, val)),
+                    new Promise(resolve => resolve(rest[index]))
+                )
+            );
         }
-        return controller[method](...values);
+
+        return Promise.all(values)
+            .then(
+                resolved => controller[method](...resolved)
+            );
     };
 }
 

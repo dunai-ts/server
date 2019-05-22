@@ -18,7 +18,7 @@
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:tslint": "tslint --fix --project .",
     "test": "run-s build test:*",
-    "test:lint": "tslint --project .",
+    "ttest:lint": "tslint --project .",
     "test:unit": "nyc --silent mocha src/**/*.spec.ts",
     "test-:prettier": "prettier \"src/**/*.ts\" --list-different",
     "watch": "run-s clean build:main && run-p \"build:main -- -w\" \"test:unit -- --watch\"",

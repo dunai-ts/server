@@ -1,4 +1,6 @@
+import { Request } from '../Interfaces';
 import { addControllerParamDecoration } from '../ParamDecoration';
+import { IDecoratedParamHttpResolveData } from './Common';
 
 export const ROUTE_PATH_PARAM = 'path';
 export const ROUTE_QUERY_PARAM = 'query';
@@ -12,7 +14,13 @@ export const ROUTE_BODY_PARAM = 'body';
  * @decorator
  */
 export function Path(key?: string) {
-    return addControllerParamDecoration(ROUTE_PATH_PARAM, key);
+    return addControllerParamDecoration({
+        type       : ROUTE_PATH_PARAM,
+        useFunction: (data: IDecoratedParamHttpResolveData, req: Request) => {
+            console.log('path', key, 'from', req.params);
+            return key ? req.params[key] : req.params
+        }
+    });
 }
 
 /**
@@ -23,7 +31,10 @@ export function Path(key?: string) {
  * @decorator
  */
 export function Query(key?: string) {
-    return addControllerParamDecoration(ROUTE_QUERY_PARAM, key);
+    return addControllerParamDecoration({
+        type       : ROUTE_QUERY_PARAM,
+        useFunction: (data: IDecoratedParamHttpResolveData, req: Request) => key ? req.query[key] : req.query
+    });
 }
 
 
@@ -35,5 +46,8 @@ export function Query(key?: string) {
  * @decorator
  */
 export function Body(key?: string) {
-    return addControllerParamDecoration(ROUTE_BODY_PARAM, key);
+    return addControllerParamDecoration({
+        type       : ROUTE_BODY_PARAM,
+        useFunction: (data: IDecoratedParamHttpResolveData, req: Request) => key ? req.body[key] : req.body
+    });
 }
