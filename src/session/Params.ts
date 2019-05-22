@@ -1,4 +1,4 @@
-import { addControllerParamDecoration } from '../controller/ParamDecorators';
+import { addControllerParamDecoration } from '../ParamDecoration';
 
 export const CONTROLLER_SESSION_PARAM = 'session';
 

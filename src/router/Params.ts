@@ -1,4 +1,4 @@
-import { addControllerParamDecoration } from '../controller/ParamDecorators';
+import { addControllerParamDecoration } from '../ParamDecoration';
 
 export const ROUTE_PATH_PARAM = 'path';
 export const ROUTE_QUERY_PARAM = 'query';
