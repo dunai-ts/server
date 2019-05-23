@@ -87,7 +87,10 @@ export class HttpServer {
     public listen(port: number, hostname: string = '0.0.0.0'): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.express.all('*', (req, res) => {
-                res.status(404).send('Page not found.');
+                res.status(404).send({
+                    code   : 'not-found',
+                    message: 'Not Found'
+                });
             });
 
             this.server = this.express.listen(port, hostname, resolve);

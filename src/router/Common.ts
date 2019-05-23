@@ -7,7 +7,9 @@ import { Router } from 'express';
 import { EntityError } from '../Common';
 import { checkController, ControllerMeta, EntitySource, IMethodParamDecoration } from '../controller/Common';
 import { Request, Response } from '../Interfaces';
+import { runMethod } from '../ParamDecoration';
 import { CONTROLLER_SESSION_PARAM } from '../session/Params';
+import { HttpError } from './Errors';
 import { ROUTE_BODY_PARAM, ROUTE_PATH_PARAM, ROUTE_QUERY_PARAM } from './Params';
 
 /**
@@ -25,8 +27,6 @@ export interface IDecoratedParamHttpResolveData {
     ws?: any;
     [key: string]: any;
 }
-
-
 
 /**
  * Route controller metadata
@@ -58,37 +58,64 @@ export class RouteMeta {
 
         if (this.methods.length) this.methods = ['all'];
 
-        this.params = controller._route_params[this.action] || [];
-        delete controller._route_params[this.action];
-
-        const entities = controller._route_entity[this.action] || [];
-
         const handler = (req: Request, res: Response) => {
-            Promise.all(prepare).then(
-                resolved => controller[this.action](...resolved),
-                (reject: Error | string) => {
-                    if (params[0] === req) params[0] = '[request]';
-                    if (params[1] === res) params[1] = '[response]';
-
-                    let reason: Error = null;
-                    if (typeof reject === 'object') reason = reject;
-                    else
-                        reason = {
-                            name   : 'Unknown',
-                            message: reject
+            const data: IDecoratedParamHttpResolveData = {
+                http: req
+            };
+            runMethod(controller, this.action)(data, req, res).then(
+                result => {
+                    res.json(result);
+                },
+                error => {
+                    let httpError: HttpError;
+                    if (error instanceof HttpError) {
+                        httpError = error;
+                    } else {
+                        const details = {
+                            stack: ('' + error.stack).split('\n')
+                                                     .slice(1)
+                                                     .map(line => {
+                                                         const match: RegExpMatchArray = line.match(/^\s+at\s([\w\.]+).*:(\d+):\d+\)/);
+                                                         return match[1] + ':' + match[2];
+                                                     })
                         };
+                        httpError     = new HttpError('server-error', '' + error, details);
+                    }
 
-                    const error: EntityError = {
-                        ...reason,
-                        message: reason.message,
-                        meta   : this,
-                        params
-                    };
-                    if (typeof controller['error'] === 'function') {
-                        controller['error'](req, res, error);
-                    } else res.status(404).json('Not found');
+                    res.status(httpError.status)
+                       .json({
+                           code   : httpError.code,
+                           message: httpError.message,
+                           details: httpError.details
+                       });
+
                 }
             );
+            //Promise.all(prepare).then(
+            //    resolved => controller[this.action](...resolved),
+            //    (reject: Error | string) => {
+            //        if (params[0] === req) params[0] = '[request]';
+            //        if (params[1] === res) params[1] = '[response]';
+            //
+            //        let reason: Error = null;
+            //        if (typeof reject === 'object') reason = reject;
+            //        else
+            //            reason = {
+            //                name   : 'Unknown',
+            //                message: reject
+            //            };
+            //
+            //        const error: EntityError = {
+            //            ...reason,
+            //            message: reason.message,
+            //            meta   : this,
+            //            params
+            //        };
+            //        if (typeof controller['error'] === 'function') {
+            //            controller['error'](req, res, error);
+            //        } else res.status(404).json('Not found');
+            //    }
+            //);
         };
 
         this.methods.forEach(method => router[method](this.path, handler));

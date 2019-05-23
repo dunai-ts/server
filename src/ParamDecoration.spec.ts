@@ -35,13 +35,13 @@ describe('Controller', () => {
                     }
                 }
 
-                const test = new TestCtrl();
+                const test    = new TestCtrl();
                 const promise = runMethod(test, 'one')({ value: 10 });
                 should(promise.then).Function();
                 const result = await promise;
                 should(result).eql(10);
 
-                const test2 = new TestCtrl();
+                const test2   = new TestCtrl();
                 const result2 = await runMethod(test2, 'one')({ value: 20 });
                 should(result2).eql(20);
             });
@@ -56,15 +56,15 @@ describe('Controller', () => {
                     }
                 }
 
-                const test = new DefaultCtrl();
+                const test  = new DefaultCtrl();
                 const proto = getControllerMetadata(test as any);
 
                 const result = await runMethod(test, 'one')(null);
                 should(result).undefined();
 
-                const test2 = new DefaultCtrl();
-                const result2 = await runMethod(test2, 'one')(null, 'req');
-                should(result2).eql('req');
+                const test2   = new DefaultCtrl();
+                const result2 = await runMethod(test2, 'one')(null, { value: 'req', other: 'foo' }, { another: 'bar' });
+                should(result2).eql({ value: 'req', other: 'foo' });
             });
 
             it('default value 2', async () => {
@@ -75,11 +75,11 @@ describe('Controller', () => {
                     }
                 }
 
-                const test2 = new TestCtrl();
+                const test2   = new TestCtrl();
                 const result2 = await runMethod(test2, 'one')({ value: 20 });
                 should(result2).eql({ req: undefined, num: 20 });
 
-                const test = new TestCtrl();
+                const test   = new TestCtrl();
                 const result = await runMethod(test, 'one')({ value: 10 }, 'req');
                 should(result).eql({ req: 'req', num: 10 });
             });
@@ -98,19 +98,19 @@ describe('Controller', () => {
                     }
                 }
 
-                const test = new TestCtrl();
+                const test   = new TestCtrl();
                 const result = await runMethod(test, 'one')({ value: 1 });
                 should(result).eql(2);
 
-                const test2 = new TestCtrl();
+                const test2   = new TestCtrl();
                 const result2 = await runMethod(test2, 'one')({ value: 2 });
                 should(result2).eql(3);
 
-                const test3 = new TestCtrl();
+                const test3   = new TestCtrl();
                 const result3 = await runMethod(test3, 'action')({ value: 1 });
                 should(result3).eql(6);
 
-                const test4 = new TestCtrl();
+                const test4   = new TestCtrl();
                 const result4 = await runMethod(test4, 'action')({ value: 20 });
                 should(result4).eql(25);
             });
@@ -127,15 +127,15 @@ describe('Controller', () => {
                     }
                 }
 
-                const test2 = new TestCtrl2();
+                const test2   = new TestCtrl2();
                 const result2 = await runMethod(test2, 'one')({ value: 15 });
                 should(result2).NaN();
 
-                const test3 = new TestCtrl2();
+                const test3   = new TestCtrl2();
                 const result3 = await runMethod(test3, 'action')({ value: 15 });
                 should(result3).eql(15);
 
-                const test4 = new TestCtrl2();
+                const test4   = new TestCtrl2();
                 const result4 = await runMethod(test4, 'action')({ value: 25 });
                 should(result4).eql(25);
             });
@@ -152,15 +152,15 @@ describe('Controller', () => {
                     }
                 }
 
-                const test2 = new TestCtrl2();
+                const test2   = new TestCtrl2();
                 const result2 = await runMethod(test2, 'one')({ value: 15 });
                 should(result2).eql('preNaN');
 
-                const test3 = new TestCtrl2();
+                const test3   = new TestCtrl2();
                 const result3 = await runMethod(test3, 'action')({ value: 15 });
                 should(result3).eql(15);
 
-                const test4 = new TestCtrl2();
+                const test4   = new TestCtrl2();
                 const result4 = await runMethod(test4, 'action')({ value: 25 });
                 should(result4).eql(25);
             });

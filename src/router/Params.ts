@@ -2,9 +2,11 @@ import { Request } from '../Interfaces';
 import { addControllerParamDecoration } from '../ParamDecoration';
 import { IDecoratedParamHttpResolveData } from './Common';
 
-export const ROUTE_PATH_PARAM = 'path';
-export const ROUTE_QUERY_PARAM = 'query';
-export const ROUTE_BODY_PARAM = 'body';
+export const ROUTE_PATH_PARAM    = 'PATH';
+export const ROUTE_QUERY_PARAM   = 'QUERY';
+export const ROUTE_BODY_PARAM    = 'BODY';
+export const ROUTE_HTTP_REQUEST  = 'HTTP_REQUEST';
+export const ROUTE_HTTP_RESPONSE = 'HTTP_RESPONSE';
 
 /**
  * Get parameter from path
@@ -16,9 +18,8 @@ export const ROUTE_BODY_PARAM = 'body';
 export function Path(key?: string) {
     return addControllerParamDecoration({
         type       : ROUTE_PATH_PARAM,
-        useFunction: (data: IDecoratedParamHttpResolveData, req: Request) => {
-            console.log('path', key, 'from', req.params);
-            return key ? req.params[key] : req.params
+        useFunction: (data: IDecoratedParamHttpResolveData) => {
+            return key ? data.http.params[key] : data.http.params;
         }
     });
 }
@@ -33,10 +34,9 @@ export function Path(key?: string) {
 export function Query(key?: string) {
     return addControllerParamDecoration({
         type       : ROUTE_QUERY_PARAM,
-        useFunction: (data: IDecoratedParamHttpResolveData, req: Request) => key ? req.query[key] : req.query
+        useFunction: (data: IDecoratedParamHttpResolveData) => key ? data.http.query[key] : data.http.query
     });
 }
-
 
 /**
  * Get parameter from body
@@ -48,6 +48,30 @@ export function Query(key?: string) {
 export function Body(key?: string) {
     return addControllerParamDecoration({
         type       : ROUTE_BODY_PARAM,
-        useFunction: (data: IDecoratedParamHttpResolveData, req: Request) => key ? req.body[key] : req.body
+        useFunction: (data: IDecoratedParamHttpResolveData) => key ? data.http.body[key] : data.http.body
+    });
+}
+
+/**
+ * Get raw http request
+ *
+ * @decorator
+ */
+export function HttpRequest() {
+    return addControllerParamDecoration({
+        type       : ROUTE_HTTP_REQUEST,
+        useFunction: (data: IDecoratedParamHttpResolveData) => data.http || null
+    });
+}
+
+/**
+ * Get raw http response
+ *
+ * @decorator
+ */
+export function HttpResponse() {
+    return addControllerParamDecoration({
+        type       : ROUTE_HTTP_RESPONSE,
+        useFunction: (data: IDecoratedParamHttpResolveData) => data.http ? data.http.res : null
     });
 }

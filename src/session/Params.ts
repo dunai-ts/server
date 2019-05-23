@@ -13,6 +13,6 @@ export const CONTROLLER_SESSION_PARAM = 'session';
 export function Session(key?: string) {
     return addControllerParamDecoration({
         type       : CONTROLLER_SESSION_PARAM,
-        useFunction: (data: IDecoratedParamHttpResolveData, req: Request) => key ? req['session'][key] : req['session']
+        useFunction: (data: IDecoratedParamHttpResolveData) => key ? data.http['session'][key] : data.http['session']
     });
 }

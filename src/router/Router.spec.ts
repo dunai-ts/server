@@ -11,7 +11,15 @@ import { Request, Response } from '../Interfaces';
 import { sessionFromCookie, sessionFromHeader, SessionStorageInMemory } from '../Session';
 import { Session } from '../session/Params';
 import { fetch } from '../utils.spec';
-import { Body, Path, Query } from './Params';
+import {
+    ForbiddenError,
+    IamaTeapotError, LockedError,
+    MethodNotAllowedError,
+    NotFoundError, TooManyRequestsError,
+    UnauthorizedError,
+    UnprocessableEntityError
+} from './Errors';
+import { Body, HttpResponse, Path, Query } from './Params';
 import { Action, Route } from './Router';
 
 @Application()
@@ -46,7 +54,26 @@ class ApiController {
     }
 }
 
+let app: App;
+
 describe('Router service', () => {
+    beforeEach(() => {
+        Injector.reset();
+        fetch('get', 'http://127.0.0.1:3000/test/b?foo=foo').then(
+            result => {
+                throw new Error('Address is busy');
+            },
+            error => {
+                if (error.code !== 'ECONNREFUSED')
+                    throw new Error('Address is busy');
+            }
+        );
+    });
+    afterEach(async () => {
+        if (app)
+            await app.server.close();
+        app = null;
+    });
     describe('Controller', () => {
         it('standard controller', () => {
             @Controller()
@@ -62,7 +89,7 @@ describe('Router service', () => {
                 constructor(public server?: HttpServer) { }
             }
 
-            const app = createApp(TestApp) as any;
+            app = createApp(TestApp) as any;
 
             app.server.registerController('/', TestController);
 
@@ -122,243 +149,16 @@ describe('Router service', () => {
                 '  and must contain at least one action');
         });
     });
-
-    describe('Params', () => {
-        let app: App;
-
-        beforeEach(() => {
-            Injector.reset();
-        });
-
-        afterEach(async () => {
-            await app.server.close();
-        });
-
-        it('default (req, res)', async () => {
-            @Controller('Test controller')
-            class TestController {
-                @Route('put', '/:id')
-                public index(req: any, res: any): void {
-                    return res.json({
-                        id  : req.params['id'],
-                        test: 'ok'
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'put',
-                'http://127.0.0.1:3000/test/a?foo=foo'
-            );
-            should(result).eql({
-                status: 200,
-                body  : {
-                    id  : 'a',
-                    test: 'ok'
-                }
-            });
-        });
-        it('default (only req)', async () => {
-            @Controller('Test controller')
-            class TestController {
-                @Route('put', '/:id')
-                public index(req: any): void {
-                    return req.res.json({
-                        id  : req.params['id'],
-                        test: 'ok'
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'put',
-                'http://127.0.0.1:3000/test/a?foo=foo'
-            );
-            should(result).eql({
-                status: 200,
-                body  : {
-                    id  : 'a',
-                    test: 'ok'
-                }
-            });
-        });
-        it('default (req, _, @Path(_)', async () => {
-            @Controller('Test controller')
-            class TestController {
-                @Route('put', '/:id')
-                public index(req: any, _, @Path('id') id: string): void {
-                    return req.res.json({
-                        id,
-                        test: 'ok'
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'put',
-                'http://127.0.0.1:3000/test/a?foo=foo'
-            );
-            should(result).eql({
-                status: 200,
-                body  : {
-                    id  : 'a',
-                    test: 'ok'
-                }
-            });
-        });
-        it('default (req, @Path(), @Query(_))', async () => {
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Path() id: object,
-                    @Query('foo') foo: string
-                ): void {
-                    return req.res.json({
-                        id,
-                        foo,
-                        test: 'ok'
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a?foo=bar'
-            );
-            should(result).eql({
-                status: 200,
-                body  : {
-                    id  : { id: 'a' },
-                    foo : 'bar',
-                    test: 'ok'
-                }
-            });
-        });
-        it('default (req, @Path, @Body)', async () => {
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Path('id') id: string,
-                    @Body('foo') foo: string
-                ): void {
-                    return req.res.json({
-                        id,
-                        foo,
-                        test: 'ok'
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a',
-                {
-                    foo: {
-                        obj: 'bar'
-                    }
-                }
-            );
-            should(result).eql({
-                status: 200,
-                body  : {
-                    id  : 'a',
-                    foo : {
-                        obj: 'bar'
-                    },
-                    test: 'ok'
-                }
-            });
-        });
-        it('default (req, @Path, @Body - full body)', async () => {
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Path('id') id: string,
-                    @Body() body: string
-                ): void {
-                    return req.res.json({
-                        id,
-                        body,
-                        test: 'ok'
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a',
-                {
-                    foo: {
-                        obj: 'bar'
-                    }
-                }
-            );
-            should(result).eql({
-                status: 200,
-                body  : {
-                    id  : 'a',
-                    body: {
-                        foo: {
-                            obj: 'bar'
-                        }
-                    },
-                    test: 'ok'
-                }
-            });
-        });
-    });
-
-    describe('Session', () => {
-        let app: App;
-
-        beforeEach(() => {
-            Injector.reset();
-        });
-
-        afterEach(async () => {
-            await app.server.close();
-        });
-
-        describe('Session id', () => {
-            // TODO docs about writing middleware
-            it('without session', async () => {
+    describe('Routes', () => {
+        describe('standard express handler style', () => {
+            it('synchronous', async () => {
                 @Controller('Test controller')
                 class TestController {
                     @Route('put', '/:id')
-                    public index(req: Request, res: Response): void {
+                    public index(req: any, res: any): void {
                         res.json({
-                            session_id: req.session_id,
-                            session   : req.session
+                            id  : req.params['id'],
+                            test: 'ok'
                         });
                     }
                 }
@@ -373,932 +173,437 @@ describe('Router service', () => {
                 );
                 should(result).eql({
                     status: 200,
-                    body  : {}
+                    body  : {
+                        id  : 'a',
+                        test: 'ok'
+                    }
                 });
             });
-
-            it('sessionFromHeader', async () => {
+            it('asynchronous (async / await)', async () => {
                 @Controller('Test controller')
                 class TestController {
                     @Route('put', '/:id')
-                    public index(req: Request, res: Response): void {
-                        res.session_id = 'changed_session_id';
+                    public async index(req: any, res: any): Promise<void> {
                         res.json({
-                            session_id: req.session_id
+                            id  : req.params['id'],
+                            test: 'ok2'
                         });
                     }
                 }
 
                 app = createApp(App);
-                app.server.setSessionStorage(
-                    sessionFromHeader(),
-                    SessionStorageInMemory
-                );
                 app.server.registerController('/test', TestController);
                 await app.server.listen(3000);
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo',
-                    {},
-                    {
-                        headers: {
-                            Authorization: 'Bearer 935ddceb2f6bbbb78363b224099f75c8'
-                        }
-                    }
+                    'http://127.0.0.1:3000/test/a?foo=foo'
                 );
                 should(result).eql({
                     status: 200,
                     body  : {
-                        session_id: '935ddceb2f6bbbb78363b224099f75c8'
+                        id  : 'a',
+                        test: 'ok2'
                     }
                 });
             });
-
-            it('sessionFromCookie', async () => {
+        });
+        describe('return object', () => {
+            it('synchronous', async () => {
                 @Controller('Test controller')
                 class TestController {
-                    @Route('put', '/:id')
-                    public index(req: Request, res: Response): void {
-                        res.session_id = 'changed_session_id';
-                        res.json({
-                            session_id: req.session_id
-                        });
+                    @Route('get', '/:id')
+                    public index(req: any, res: any): any {
+                        return {
+                            id  : req.params['id'],
+                            test: 'ok2'
+                        };
                     }
                 }
 
                 app = createApp(App);
-                app.server.setSessionStorage(
-                    sessionFromCookie(),
-                    SessionStorageInMemory
-                );
                 app.server.registerController('/test', TestController);
                 await app.server.listen(3000);
 
                 const result = await fetch(
-                    'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo',
-                    {},
-                    {
-                        headers: {
-                            Cookie: 'session=935ddceb2f6bbbb78363b224099f75c8'
-                        }
-                    }
-                );
-                should(result).eql({
-                    status : 200,
-                    headers: {
-                        cookie: {
-                            session: 'changed_session_id'
-                        }
-                    },
-                    body   : {
-                        session_id: '935ddceb2f6bbbb78363b224099f75c8'
-                    }
-                });
-            });
-
-            it('in-memory session', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route(['get', 'put'], '/')
-                    public index(req: Request, res: Response): void {
-                        if (req.body)
-                            res.session.set(req.body);
-                        res.session.set('changed', true);
-                        res.json({
-                            session_id: req.session_id,
-                            session   : req.session
-                        });
-                    }
-                }
-
-                app = createApp(App);
-                app.server.setSessionStorage(
-                    sessionFromHeader(),
-                    SessionStorageInMemory
-                );
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'put',
-                    'http://127.0.0.1:3000/test/',
-                    {
-                        foo: 'bar'
-                    },
-                    {
-                        headers: {
-                            Authorization: 'Bearer 935ddceb2f6bbbb78363b224099f75c8'
-                        }
-                    }
-                );
-                should(result).eql({
-                    status: 200,
-                    body  : {
-                        session_id: '935ddceb2f6bbbb78363b224099f75c8',
-                        session   : {}
-                    }
-                });
-
-                const result2 = await fetch(
                     'get',
-                    'http://127.0.0.1:3000/test/',
-                    null,
-                    {
-                        headers: {
-                            Authorization: 'Bearer 935ddceb2f6bbbb78363b224099f75c8'
-                        }
-                    }
-                );
-                should(result2).eql({
-                    status: 200,
-                    body  : {
-                        session_id: '935ddceb2f6bbbb78363b224099f75c8',
-                        session   : {
-                            foo    : 'bar',
-                            changed: true
-                        }
-                    }
-                });
-            });
-
-            it('default (req, @Session())', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('put', '/:id')
-                    public index(req: Request, @Session() session: any): void {
-                        req.res.json({
-                            session_id: req.session_id,
-                            session
-                        });
-                    }
-                }
-
-                app = createApp(App);
-                app.server.setSessionStorage(
-                    sessionFromHeader(),
-                    SessionStorageInMemory
-                );
-                app.server.sessionStorage['storage']['SESSION_ID'] = {
-                    foo: 'bar'
-                };
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo',
-                    null,
-                    {
-                        headers: {
-                            Authorization: 'Bearer SESSION_ID'
-                        }
-                    }
-                );
-                should(result).eql({
-                    status: 200,
-                    body  : {
-                        session_id: 'SESSION_ID',
-                        session   : {
-                            foo: 'bar'
-                        }
-                    }
-                });
-            });
-
-            it('default (req, @Session(_))', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('put', '/:id')
-                    public index(req: Request, @Session('foo') foo: any): void {
-                        req.res.json({
-                            session_id: req.session_id,
-                            foo
-                        });
-                    }
-                }
-
-                app = createApp(App);
-                app.server.setSessionStorage(
-                    sessionFromHeader(),
-                    SessionStorageInMemory
-                );
-                app.server.sessionStorage['storage']['SESSION_ID'] = {
-                    foo: 'bar'
-                };
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo',
-                    null,
-                    {
-                        headers: {
-                            Authorization: 'Bearer SESSION_ID'
-                        }
-                    }
-                );
-                should(result).eql({
-                    status: 200,
-                    body  : {
-                        session_id: 'SESSION_ID',
-                        foo       : 'bar'
-                    }
-                });
-            });
-        });
-
-        describe('Check session', () => {
-            function mockSession() {
-                return (req: Request, res: Response, next: any) => {
-                    req.session_id = 'SESSION_ID';
-                    req.session    = {
-                        foo: 'bar'
-                    };
-                    const ret      = next();
-                    console.log('ASDASDAS', typeof ret, ret);
-                };
-            }
-
-            it('without session', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('put', '/:id')
-                    public index(req: Request, res: Response): void {
-                        res.json({
-                            session_id: req.session_id,
-                            session   : req.session
-                        });
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo'
-                );
-                should(result).eql({
-                    status: 200,
-                    body  : {}
-                });
-            });
-
-            it('in-memory session', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('put', '/:id')
-                    public index(req: Request, res: Response): void {
-                        res.json({
-                            session_id: req.session_id,
-                            session   : req.session
-                        });
-                    }
-                }
-
-                app = createApp(App);
-                app.server.use(mockSession());
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'put',
                     'http://127.0.0.1:3000/test/a?foo=foo'
                 );
                 should(result).eql({
                     status: 200,
                     body  : {
-                        session_id: 'SESSION_ID',
-                        session   : {
-                            foo: 'bar'
-                        }
+                        id  : 'a',
+                        test: 'ok2'
                     }
                 });
             });
-
-            it('default (req, @Session())', async () => {
+            it('asynchronous (async / await)', async () => {
                 @Controller('Test controller')
                 class TestController {
                     @Route('put', '/:id')
-                    public index(req: Request, @Session() session: any): void {
-                        req.res.json({
-                            session_id: req.session_id,
-                            session
-                        });
+                    public async index(req: any, res: any): Promise<any> {
+                        await sleep(100);
+                        return {
+                            id  : req.params['id'],
+                            test: 'put_ok'
+                        };
                     }
                 }
 
                 app = createApp(App);
-                app.server.use(mockSession());
                 app.server.registerController('/test', TestController);
                 await app.server.listen(3000);
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo'
+                    'http://127.0.0.1:3000/test/b?foo=foo'
                 );
                 should(result).eql({
                     status: 200,
                     body  : {
-                        session_id: 'SESSION_ID',
-                        session   : {
-                            foo: 'bar'
-                        }
+                        id  : 'b',
+                        test: 'put_ok'
                     }
                 });
             });
-
-            it('default (req, @Session(_))', async () => {
+            it('asynchronous + set status (async / await)', async () => {
                 @Controller('Test controller')
                 class TestController {
                     @Route('put', '/:id')
-                    public index(req: Request, @Session('foo') foo: string): void {
-                        req.res.json({
-                            session_id: req.session_id,
-                            foo
-                        });
+                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
+                        await sleep(100);
+                        res.status(404);
+                        return {
+                            id,
+                            test: 'put_fail'
+                        };
                     }
                 }
 
                 app = createApp(App);
-                app.server.use(mockSession());
                 app.server.registerController('/test', TestController);
                 await app.server.listen(3000);
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo'
+                    'http://127.0.0.1:3000/test/b?foo=foo'
                 );
                 should(result).eql({
-                    status: 200,
+                    status: 404,
                     body  : {
-                        session_id: 'SESSION_ID',
-                        foo       : 'bar'
+                        id  : 'b',
+                        test: 'put_fail'
                     }
                 });
             });
         });
-    });
-
-    describe('Entity in params', () => {
-        let app: App;
-
-        beforeEach(() => {
-            Injector.reset();
-        });
-
-        afterEach(async () => {
-            await app.server.close();
-        });
-
-        it('Sync getter (req, @Entity @Path, @Body)', async () => {
-            class Test {
-                public static findByPk(id: string): Test {
-                    return new Test({ id });
-                }
-
-                public id: string;
-
-                constructor(data?: any) {
-                    Object.assign(this, data);
-                }
-            }
-
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Entity(Test) @Path('id') path: string,
-                    @Body('foo') foo: string
-                ): void {
-                    return req.res.json({
-                        path,
-                        foo,
-                        test: 'ok'
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a',
-                {
-                    foo: {
-                        obj: 'bar'
+        describe('errors', () => {
+            it('not found (incorrect controller)', async () => {
+                @Controller('Test controller')
+                class TestController {
+                    @Route('put', '/:id')
+                    public async index(req: any, res: Response): Promise<any> {
+                        await sleep(100);
+                        res.status(404);
+                        return {
+                            id  : req.params['id'],
+                            test: 'put_fail'
+                        };
                     }
                 }
-            );
-            should(result).eql({
-                status: 200,
-                body  : {
-                    path: {
-                        id: 'a'
-                    },
-                    foo : {
-                        obj: 'bar'
-                    },
-                    test: 'ok'
-                }
-            });
-        });
-        it('Promise (req, @Entity @Path, @Body)', async () => {
-            class Test {
-                public static findByPk(id: string): Promise<Test> {
-                    return new Promise<Test>((resolve, reject) => {
-                        setTimeout(() => resolve(new Test({ id })), 10);
-                    });
-                }
 
-                public id: string;
+                app = createApp(App);
+                app.server.registerController('/test', TestController);
+                await app.server.listen(3000);
 
-                constructor(data?: any) {
-                    Object.assign(this, data);
-                }
-            }
-
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Entity(Test) @Path('id') path: string,
-                    @Body('foo') foo: string
-                ): void {
-                    return req.res.json({
-                        path,
-                        foo,
-                        test: 'ok'
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a',
-                {
-                    foo: {
-                        obj: 'bar'
+                const result = await fetch(
+                    'put',
+                    'http://127.0.0.1:3000/b?foo=foo'
+                );
+                should(result).eql({
+                    status: 404,
+                    body  : {
+                        code   : 'not-found',
+                        message: 'Not Found'
                     }
-                }
-            );
-            should(result).eql({
-                status: 200,
-                body  : {
-                    path: {
-                        id: 'a'
-                    },
-                    foo : {
-                        obj: 'bar'
-                    },
-                    test: 'ok'
-                }
-            });
-        });
-        it('Promise - unhandled error (req, @Entity @Path, @Body)', async () => {
-            class Test {
-                public static findByPk(id: string): Promise<Test> {
-                    return new Promise<Test>((resolve, reject) => {
-                        setTimeout(() => reject('Not found'), 10);
-                    });
-                }
-
-                public id: string;
-
-                constructor(data?: any) {
-                    Object.assign(this, data);
-                }
-            }
-
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Entity(Test) @Path('id') path: string,
-                    @Body('foo') foo: string
-                ): void {
-                    return req.res.json({
-                        path,
-                        foo,
-                        test: 'ok'
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a',
-                {
-                    foo: {
-                        obj: 'bar'
-                    }
-                }
-            );
-            should(result).eql({
-                status: 404,
-                body  : 'Not found'
-            });
-        });
-        it('Promise - handled error (req, @Entity @Path, @Body)', async () => {
-            class Test {
-                public static findByPk(id: string): Promise<Test> {
-                    return new Promise<Test>((resolve, reject) => {
-                        setTimeout(() => reject('Invalid ID'), 10);
-                    });
-                }
-
-                public id: string;
-
-                constructor(data?: any) {
-                    Object.assign(this, data);
-                }
-            }
-
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Entity(Test) @Path('id') path: Test,
-                    @Body('foo') foo: object
-                ): void {
-                    return req.res.json({
-                        path,
-                        foo,
-                        test: 'ok'
-                    });
-                }
-
-                public error(
-                    _: Request,
-                    res: Response,
-                    error: EntityError
-                ): void {
-                    res.status(400).json({
-                        error : error.message,
-                        action: error.meta.action,
-                        params: error.params
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a',
-                {
-                    foo: {
-                        obj: 'bar'
-                    }
-                }
-            );
-            should(result).eql({
-                status: 400,
-                body  : {
-                    error : 'Invalid ID',
-                    action: 'index',
-                    params: ['[request]', 'a', { obj: 'bar' }]
-                }
-            });
-        });
-        it('error before create Promise - handled error (req, @Entity @Path, @Body)', async () => {
-            class TError extends Error {
-                public details: string = 'some details';
-            }
-
-            class Test {
-                public static findByPk(id: string): Promise<Test> {
-                    throw new TError('Test error');
-
-                    return new Promise<Test>((resolve, reject) => {
-                        setTimeout(() => reject('Invalid ID'), 10);
-                    });
-                }
-
-                public id: string;
-
-                constructor(data?: any) {
-                    Object.assign(this, data);
-                }
-            }
-
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Entity(Test) @Path('id') path: Test,
-                    @Body('foo') foo: object
-                ): void {
-                    return req.res.json({
-                        path,
-                        foo,
-                        test: 'ok'
-                    });
-                }
-
-                public error(
-                    _: Request,
-                    res: Response,
-                    error: EntityError
-                ): void {
-                    res.status(400).json({
-                        error  : error.message,
-                        details: error['details'],
-                        action : error.meta.action,
-                        params : error.params
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a',
-                {
-                    foo: {
-                        obj: 'bar'
-                    }
-                }
-            );
-            should(result).eql({
-                status: 400,
-                body  : {
-                    error  : 'Test error',
-                    details: 'some details',
-                    action : 'index',
-                    params : ['[request]', 'a', { obj: 'bar' }]
-                }
-            });
-        });
-        it('function - handled error (req, @Entity @Path, @Body)', async () => {
-            function findByPk(id: string): Promise<Test> {
-                return new Promise<Test>((resolve, reject) => {
-                    setTimeout(() => reject('Invalid ID'), 10);
                 });
-            }
-
-            class Test {
-                public id: string;
-
-                constructor(data?: any) {
-                    Object.assign(this, data);
-                }
-            }
-
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Entity(findByPk) @Path('id') path: Test,
-                    @Body('foo') foo: object
-                ): void {
-                    return req.res.json({
-                        path,
-                        foo,
-                        test: 'ok'
-                    });
-                }
-
-                public error(
-                    _: Request,
-                    res: Response,
-                    error: EntityError
-                ): void {
-                    res.status(400).json({
-                        error : error.message,
-                        action: error.meta.action,
-                        params: error.params
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a',
-                {
-                    foo: {
-                        obj: 'bar'
+            });
+            it('not found (incorrect method)', async () => {
+                @Controller('Test controller')
+                class TestController {
+                    @Route('put', '/:id')
+                    public async index(req: any, res: Response): Promise<any> {
+                        await sleep(100);
+                        res.status(404);
+                        return {
+                            id  : req.params['id'],
+                            test: 'put_fail'
+                        };
                     }
                 }
-            );
-            should(result).eql({
-                status: 400,
-                body  : {
-                    error : 'Invalid ID',
-                    action: 'index',
-                    params: ['[request]', 'a', { obj: 'bar' }]
-                }
-            });
-        });
-        it('error in function - handled error (req, @Entity @Path, @Body)', async () => {
-            function findByPk(id: string): Promise<Test> {
-                throw new Error('throw error');
 
-                return new Promise<Test>((resolve, reject) => {
-                    setTimeout(() => reject('Invalid ID'), 10);
+                app = createApp(App);
+                app.server.registerController('/test', TestController);
+                await app.server.listen(3000);
+
+                const result = await fetch(
+                    'get',
+                    'http://127.0.0.1:3000/b?foo=foo'
+                );
+                should(result).eql({
+                    status: 404,
+                    body  : {
+                        code   : 'not-found',
+                        message: 'Not Found'
+                    }
                 });
-            }
-
-            class Test {
-                public id: string;
-
-                constructor(data?: any) {
-                    Object.assign(this, data);
-                }
-            }
-
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Entity(findByPk) @Path('id') path: Test,
-                    @Body('foo') foo: object
-                ): void {
-                    return req.res.json({
-                        path,
-                        foo,
-                        test: 'ok'
-                    });
-                }
-
-                public error(
-                    _: Request,
-                    res: Response,
-                    error: EntityError
-                ): void {
-                    res.status(400).json({
-                        error : error.message,
-                        action: error.meta.action,
-                        params: error.params
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a',
-                {
-                    foo: {
-                        obj: 'bar'
+            });
+            it('NotFoundError + async / await', async () => {
+                @Controller('Test controller')
+                class TestController {
+                    @Route('get', '/:id')
+                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
+                        await sleep(100);
+                        throw new NotFoundError(-32601, 'No any objects');
                     }
                 }
-            );
-            should(result).eql({
-                status: 400,
-                body  : {
-                    error : 'throw error',
-                    action: 'index',
-                    params: ['[request]', 'a', { obj: 'bar' }]
-                }
-            });
-        });
-        it('real error in promise function - handled error (req, @Entity @Path, @Body)', async () => {
-            function findByPk(id: string): Promise<string> {
-                return new Promise(resolve => {
-                    const g: string = null;
-                    resolve(g.substr(0, 10));
+
+                app = createApp(App);
+                app.server.registerController('/test', TestController);
+                await app.server.listen(3000);
+
+                const result = await fetch(
+                    'get',
+                    'http://127.0.0.1:3000/test/b?foo=foo'
+                );
+                should(result).eql({
+                    status: 404,
+                    body  : {
+                        code   : -32601,
+                        message: 'No any objects'
+                    }
                 });
-            }
-
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Entity(findByPk) @Path('id') path: string,
-                    @Body('foo') foo: object
-                ): void {
-                    return req.res.json({
-                        path,
-                        foo,
-                        test: 'ok'
-                    });
-                }
-
-                public error(
-                    _: Request,
-                    res: Response,
-                    error: EntityError
-                ): void {
-                    res.status(400).json({
-                        error : error.message,
-                        action: error.meta.action,
-                        params: error.params
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a',
-                {
-                    foo: {
-                        obj: 'bar'
-                    }
-                }
-            );
-            should(result).eql({
-                status: 400,
-                body  : {
-                    error : 'Cannot read property \'substr\' of null',
-                    action: 'index',
-                    params: ['[request]', 'a', { obj: 'bar' }]
-                }
             });
-        });
-        it('real error in function - handled error (req, @Entity @Path, @Body)', async () => {
-            function findByPk(id: string): string {
-                const g: string = null;
-                return g.substr(0, 10);
-            }
-
-            @Controller('Test controller')
-            class TestController {
-                @Route('patch', '/:id')
-                public index(
-                    req: any,
-                    @Entity(findByPk) @Path('id') path: string,
-                    @Body('foo') foo: object
-                ): void {
-                    return req.res.json({
-                        path,
-                        foo,
-                        test: 'ok'
-                    });
-                }
-
-                public error(
-                    req: Request,
-                    res: Response,
-                    error: EntityError
-                ): void {
-                    res.status(400).json({
-                        error : error.message,
-                        action: error.meta.action,
-                        params: error.params
-                    });
-                }
-            }
-
-            app = createApp(App);
-            app.server.registerController('/test', TestController);
-            await app.server.listen(3000);
-
-            const result = await fetch(
-                'patch',
-                'http://127.0.0.1:3000/test/a',
-                {
-                    foo: {
-                        obj: 'bar'
+            it('standard Error + async / await', async () => {
+                @Controller('Test controller')
+                class TestController {
+                    @Route('get', '/:id')
+                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
+                        await sleep(100);
+                        throw new Error('Some error');
                     }
                 }
-            );
-            should(result).eql({
-                status: 400,
-                body  : {
-                    action: 'index',
-                    error : 'Cannot read property \'substr\' of null',
-                    params: ['[request]', 'a', { obj: 'bar' }]
+
+                app = createApp(App);
+                app.server.registerController('/test', TestController);
+                await app.server.listen(3000);
+
+                const result = await fetch(
+                    'get',
+                    'http://127.0.0.1:3000/test/b?foo=foo'
+                );
+                should(result).eql({
+                    status: 500,
+                    body  : {
+                        code   : 'server-error',
+                        message: 'Error: Some error',
+                        details: {
+                            stack: [
+                                'TestController.index:393'
+                            ]
+                        }
+                    }
+                });
+            });
+            it('UnauthorizedError + async / await', async () => {
+                @Controller('Test controller')
+                class TestController {
+                    @Route('get', '/:id')
+                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
+                        await sleep(100);
+                        throw new UnauthorizedError(-32601, 'Error message');
+                    }
                 }
+
+                app = createApp(App);
+                app.server.registerController('/test', TestController);
+                await app.server.listen(3000);
+
+                const result = await fetch(
+                    'get',
+                    'http://127.0.0.1:3000/test/b?foo=foo'
+                );
+                should(result).eql({
+                    status: 401,
+                    body  : {
+                        code   : -32601,
+                        message: 'Error message'
+                    }
+                });
+            });
+            it('ForbiddenError + async / await', async () => {
+                @Controller('Test controller')
+                class TestController {
+                    @Route('get', '/:id')
+                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
+                        await sleep(100);
+                        throw new ForbiddenError(-32601, 'Error message');
+                    }
+                }
+
+                app = createApp(App);
+                app.server.registerController('/test', TestController);
+                await app.server.listen(3000);
+
+                const result = await fetch(
+                    'get',
+                    'http://127.0.0.1:3000/test/b?foo=foo'
+                );
+                should(result).eql({
+                    status: 403,
+                    body  : {
+                        code   : -32601,
+                        message: 'Error message'
+                    }
+                });
+            });
+            it('MethodNotAllowedError + async / await', async () => {
+                @Controller('Test controller')
+                class TestController {
+                    @Route('get', '/:id')
+                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
+                        await sleep(100);
+                        throw new MethodNotAllowedError(-32601, 'Error message');
+                    }
+                }
+
+                app = createApp(App);
+                app.server.registerController('/test', TestController);
+                await app.server.listen(3000);
+
+                const result = await fetch(
+                    'get',
+                    'http://127.0.0.1:3000/test/b?foo=foo'
+                );
+                should(result).eql({
+                    status: 405,
+                    body  : {
+                        code   : -32601,
+                        message: 'Error message'
+                    }
+                });
+            });
+            it('IamaTeapotError + async / await', async () => {
+                @Controller('Test controller')
+                class TestController {
+                    @Route('get', '/:id')
+                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
+                        await sleep(100);
+                        throw new IamaTeapotError(-32601, 'Error message', { teapot: 'https://en.wikipedia.org/wiki/Teapot' });
+                    }
+                }
+
+                app = createApp(App);
+                app.server.registerController('/test', TestController);
+                await app.server.listen(3000);
+
+                const result = await fetch(
+                    'get',
+                    'http://127.0.0.1:3000/test/b?foo=foo'
+                );
+                should(result).eql({
+                    status: 418,
+                    body  : {
+                        code   : -32601,
+                        message: 'Error message',
+                        details: {
+                            teapot: 'https://en.wikipedia.org/wiki/Teapot'
+                        }
+                    }
+                });
+            });
+            it('UnprocessableEntityError + async / await', async () => {
+                @Controller('Test controller')
+                class TestController {
+                    @Route('get', '/:id')
+                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
+                        await sleep(100);
+                        throw new UnprocessableEntityError(-32601, 'Error message');
+                    }
+                }
+
+                app = createApp(App);
+                app.server.registerController('/test', TestController);
+                await app.server.listen(3000);
+
+                const result = await fetch(
+                    'get',
+                    'http://127.0.0.1:3000/test/b?foo=foo'
+                );
+                should(result).eql({
+                    status: 422,
+                    body  : {
+                        code   : -32601,
+                        message: 'Error message'
+                    }
+                });
+            });
+            it('LockedError + async / await', async () => {
+                @Controller('Test controller')
+                class TestController {
+                    @Route('get', '/:id')
+                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
+                        await sleep(100);
+                        throw new LockedError(-32601, 'Error message');
+                    }
+                }
+
+                app = createApp(App);
+                app.server.registerController('/test', TestController);
+                await app.server.listen(3000);
+
+                const result = await fetch(
+                    'get',
+                    'http://127.0.0.1:3000/test/b?foo=foo'
+                );
+                should(result).eql({
+                    status: 423,
+                    body  : {
+                        code   : -32601,
+                        message: 'Error message'
+                    }
+                });
+            });
+            it('TooManyRequestsError + async / await', async () => {
+                @Controller('Test controller')
+                class TestController {
+                    @Route('get', '/:id')
+                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
+                        await sleep(100);
+                        throw new TooManyRequestsError(-32601, 'Error message');
+                    }
+                }
+
+                app = createApp(App);
+                app.server.registerController('/test', TestController);
+                await app.server.listen(3000);
+
+                const result = await fetch(
+                    'get',
+                    'http://127.0.0.1:3000/test/b?foo=foo'
+                );
+                should(result).eql({
+                    status: 429,
+                    body  : {
+                        code   : -32601,
+                        message: 'Error message'
+                    }
+                });
             });
         });
     });
 });
+
+function sleep(timeout = 0): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, timeout));
+}
