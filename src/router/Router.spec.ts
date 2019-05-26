@@ -70,7 +70,7 @@ describe('Router service', () => {
         );
     });
     afterEach(async () => {
-        if (app)
+        if (app && app.server)
             await app.server.close();
         app = null;
     });
