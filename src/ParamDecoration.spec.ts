@@ -1,10 +1,16 @@
+import { Injector, Service } from '@dunai/core';
 import { describe, it } from 'mocha';
 import should from 'should';
 import { Controller } from './controller/Controller';
-import { addControllerParamDecoration, getControllerMetadata, runMethod } from './ParamDecoration';
+import {
+    addControllerParamDecoration,
+    getControllerMetadata,
+    IDecoratedParamResolver,
+    runMethod
+} from './ParamDecoration';
 
-describe('Controller', () => {
-    describe('Param decorations', () => {
+describe('Param decorations', () => {
+    describe('useFunction', () => {
         function Value() {
             return addControllerParamDecoration({
                 type       : 'value',
@@ -164,6 +170,179 @@ describe('Controller', () => {
                 const result4 = await runMethod(test4, 'action')({ value: 25 });
                 should(result4).eql(25);
             });
+        });
+    });
+
+    describe('useClass', () => {
+        @Service()
+        class CounterService implements IDecoratedParamResolver {
+            private count = 0;
+
+            public resolveParam(data: any, value?: any): any {
+                this.count++;
+                return this.count;
+            }
+        }
+
+        function Counter() {
+            return addControllerParamDecoration({
+                type    : 'counter',
+                useClass: CounterService
+            });
+        }
+
+        it('promise', async () => {
+            @Controller()
+            class TestCtrl2 {
+                public one(@Counter() guid: string) {
+                    return guid;
+                }
+
+                public action(@Counter() guid: string) {
+                    return guid;
+                }
+            }
+
+            const test   = new TestCtrl2();
+            const result = await runMethod(test, 'one')({});
+            should(result).eql(1);
+
+            const test2   = new TestCtrl2();
+            const result2 = await runMethod(test2, 'action')({});
+            should(result2).eql(2);
+
+            const test3   = new TestCtrl2();
+            const result3 = await runMethod(test3, 'action')({});
+            should(result3).eql(3);
+        });
+
+    });
+
+    describe('useInstance', () => {
+        @Service()
+        class CounterService implements IDecoratedParamResolver {
+            private count = 0;
+
+            public resolveParam(data: any, value?: any): any {
+                this.count++;
+                return this.count;
+            }
+        }
+
+        const counterInstance = new CounterService();
+
+        function Counter() {
+            return addControllerParamDecoration({
+                type       : 'counter',
+                useInstance: counterInstance
+            });
+        }
+
+        it('promise', async () => {
+            @Controller()
+            class TestCtrl2 {
+                public one(@Counter() guid: string) {
+                    return guid;
+                }
+
+                public action(@Counter() guid: string) {
+                    return guid;
+                }
+            }
+
+            const test   = new TestCtrl2();
+            const result = await runMethod(test, 'one')({});
+            should(result).eql(1);
+
+            const test2   = new TestCtrl2();
+            const result2 = await runMethod(test2, 'action')({});
+            should(result2).eql(2);
+
+            const test3   = new TestCtrl2();
+            const result3 = await runMethod(test3, 'action')({});
+            should(result3).eql(3);
+        });
+
+    });
+
+    describe('useInstance', () => {
+        @Service()
+        class CounterService implements IDecoratedParamResolver {
+            public count = 0;
+
+            public resolveParam(data: any, value?: any): any {
+                this.count++;
+                return this.count;
+            }
+        }
+
+        function factory(_, __, index) {
+            const counterInstance = new CounterService();
+            counterInstance.count = index;
+            return counterInstance.resolveParam.bind(counterInstance);
+        }
+
+        function Counter() {
+            return addControllerParamDecoration({
+                type      : 'counter',
+                useFactory: factory
+            });
+        }
+
+        it('promise', async () => {
+            @Controller()
+            class TestCtrl2 {
+                public one(@Counter() guid: string) {
+                    return guid;
+                }
+
+                public action(_, @Counter() guid: string) {
+                    return guid;
+                }
+            }
+
+            const test   = new TestCtrl2();
+            const result = await runMethod(test, 'one')({});
+            should(result).eql(1);
+
+            const test4   = new TestCtrl2();
+            const result4 = await runMethod(test4, 'one')({});
+            should(result4).eql(2);
+
+            const test2   = new TestCtrl2();
+            const result2 = await runMethod(test2, 'action')({});
+            should(result2).eql(2);
+
+            const test3   = new TestCtrl2();
+            const result3 = await runMethod(test3, 'action')({});
+            should(result3).eql(3);
+        });
+
+    });
+
+    describe('errors', () => {
+        function Counter() {
+            return addControllerParamDecoration({
+                type: 'counter'
+            });
+        }
+
+        it('invalid decorator', async () => {
+            should(() => {
+                @Controller()
+                class TestCtrl2 {
+                    public one(@Counter() guid: string) {
+                        return guid;
+                    }
+
+                    public action(_, @Counter() guid: string) {
+                        return guid;
+                    }
+                }
+
+                const test   = new TestCtrl2();
+                const result = runMethod(test, 'action')({});
+            }).throwError('Invalid param decorator in class "TestCtrl2" method "action"');
         });
     });
 });

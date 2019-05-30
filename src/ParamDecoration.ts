@@ -2,7 +2,7 @@
  * @module @dunai/server
  */
 
-import { Type } from '@dunai/core';
+import { Injector, Type } from '@dunai/core';
 import 'reflect-metadata';
 
 const CONTROLLER_META_KEY = 'dunai:controller';
@@ -11,16 +11,17 @@ export type IDecoratedParamResolveData = any;
 
 export type IDecoratedParamResolveFunction = (data: IDecoratedParamResolveData, value?: any) => any;
 
+export interface IDecoratedParamResolver {
+    resolveParam(data: IDecoratedParamResolveData, value?: any): any;
+}
+
 export interface IDecoratedParamDecoration {
     type: string;
     useFunction?: IDecoratedParamResolveFunction;
-    useClass?: IDecoratedParamResolver;
+    useInstance?: IDecoratedParamResolver;
+    useFactory?: (controller?: any, method?: string, index?: number) => IDecoratedParamResolveFunction;
+    useClass?: Type<IDecoratedParamResolver>;
 }
-
-export interface IDecoratedParamResolver {
-    resolveParam: IDecoratedParamResolveFunction;
-}
-
 
 /**
  * Base function for param decorators
@@ -62,9 +63,21 @@ export function prepareMethod(controller: Type<any>, method: string): IDecorated
         return [];
     }
 
-    meta.preparedMethods[method] = meta.methodParams[method].map(param => {
+    meta.preparedMethods[method] = meta.methodParams[method].map((param, index) => {
         return param.map(item => {
-            return item.useFunction;
+            if (item.useFunction)
+                return item.useFunction;
+            if (item.useClass) {
+                const instance: IDecoratedParamResolver = Injector.resolve(item.useClass);
+                return instance.resolveParam.bind(instance);
+            }
+            if (item.useInstance) {
+                return item.useInstance.resolveParam.bind(item.useInstance);
+            }
+            if (item.useFactory) {
+                return item.useFactory(controller, method, index);
+            }
+            throw new Error(`Invalid param decorator in class "${controller.constructor.name}" method "${method}"`);
         });
     });
 

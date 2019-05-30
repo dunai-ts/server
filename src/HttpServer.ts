@@ -120,14 +120,10 @@ export class HttpServer {
      */
     public close(): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.server.addListener('error', (e: any) => {
-                reject(e);
-                this.server.removeListener('close', resolve);
-            });
-            this.server.addListener('close', () => {
-                resolve();
-                this.server.removeListener('error', reject);
-            });
+            if (!this.server)
+                return resolve();
+            this.server.once('error', reject);
+            this.server.once('close', resolve);
             this.server.close(resolve);
         });
     }
