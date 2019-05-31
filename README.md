@@ -1,9 +1,9 @@
 # @dunai/server
 
-TypeScript framework
-* bases on express.js
-* simple
-* cleanly and powerful
+TypeScript HTTP / WebSocket framework
+* **simple**
+* **powerful**
+* **express compatible**
 
 ## TODO
 * redirect - code
