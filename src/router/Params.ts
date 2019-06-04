@@ -1,5 +1,4 @@
-import { Request } from '../Interfaces';
-import { addControllerParamDecoration } from '../ParamDecoration';
+import { addControllerParamDecoration } from '@dunai/core/build/main/lib/ParamDecoration';
 import { IDecoratedParamHttpResolveData } from './Common';
 
 export const ROUTE_PATH_PARAM    = 'PATH';

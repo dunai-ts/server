@@ -1,4 +1,4 @@
-import { addControllerParamDecoration } from '../ParamDecoration';
+import { addControllerParamDecoration } from '@dunai/core';
 import { IDecoratedParamHttpResolveData } from '../router/Common';
 
 export const CONTROLLER_SESSION_PARAM = 'session';
