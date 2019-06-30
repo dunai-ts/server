@@ -7,7 +7,7 @@ import { runMethod } from '@dunai/core';
 import { Router } from 'express';
 import { checkController, ControllerMeta, EntitySource, IMethodParamDecoration } from '../controller/Common';
 import { Request, Response } from '../Interfaces';
-import { HttpError } from './Errors';
+import { HttpError, InternalServerError } from './Errors';
 
 /**
  * List of actions in controller metadata
@@ -76,10 +76,11 @@ export class RouteMeta {
                                                          return match[1] + ':' + match[2];
                                                      })
                         };
-                        httpError     = new HttpError('server-error', '' + error, details);
+
+                        httpError = new InternalServerError('' + error, -32603, details);
                     }
 
-                    res.status(httpError.status)
+                    res.status(httpError.statusCode)
                        .json({
                            code   : httpError.code,
                            message: httpError.message,

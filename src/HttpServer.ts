@@ -2,14 +2,13 @@
  * @module @dunai/server
  */
 
-import { Injector, Service, Type } from '@dunai/core';
+import { deepFreeze, Injector, Service, Type } from '@dunai/core';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import * as http from 'http';
 import { Request, Response } from './Interfaces';
 import { RouteMeta } from './router/Common';
-import { ISessionStorage, SessionData } from './Session';
-import { deepFreeze } from './utils';
+import { ISessionStorage, SessionData } from './session/Session';
 
 /**
  * HTTP server (bases on express.js)
@@ -88,7 +87,7 @@ export class HttpServer {
         return new Promise<void>((resolve, reject) => {
             this.express.all('*', (req, res) => {
                 res.status(404).send({
-                    code   : 'not-found',
+                    code   : -32601,
                     message: 'Not Found'
                 });
             });
@@ -120,6 +119,8 @@ export class HttpServer {
      */
     public close(): Promise<void> {
         return new Promise<void>((resolve, reject) => {
+            if (!this.server)
+                return resolve();
             this.server.addListener('error', (e: any) => {
                 reject(e);
                 this.server.removeListener('close', resolve);

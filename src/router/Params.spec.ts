@@ -75,6 +75,7 @@ describe('Params', () => {
         );
         should(result).eql({
             status: 200,
+            statusText: "OK",
             body  : {
                 id  : 'a',
                 test: 'ok'
@@ -103,6 +104,7 @@ describe('Params', () => {
         );
         should(result).eql({
             status: 200,
+            statusText: "OK",
             body  : {
                 id  : 'a',
                 test: 'ok'
@@ -131,6 +133,7 @@ describe('Params', () => {
         );
         should(result).eql({
             status: 200,
+            statusText: "OK",
             body  : {
                 id  : 'a',
                 test: 'ok'
@@ -164,6 +167,7 @@ describe('Params', () => {
         );
         should(result).eql({
             status: 200,
+            statusText: "OK",
             body  : {
                 id  : { id: 'a' },
                 foo : 'bar',
@@ -203,6 +207,7 @@ describe('Params', () => {
         );
         should(result).eql({
             status: 200,
+            statusText: "OK",
             body  : {
                 id  : 'a',
                 foo : {
@@ -244,6 +249,7 @@ describe('Params', () => {
         );
         should(result).eql({
             status: 200,
+            statusText: "OK",
             body  : {
                 id  : 'a',
                 body: {
@@ -284,6 +290,7 @@ describe('Params', () => {
         );
         should(result).eql({
             status: 200,
+            statusText: "OK",
             body  : {
                 url  : '/a',
             }

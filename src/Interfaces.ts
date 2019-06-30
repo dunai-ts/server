@@ -3,7 +3,7 @@
  */
 
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
-import { SessionData } from './Session';
+import { SessionData } from './session/Session';
 
 export interface Request extends ExpressRequest {
     session_id?: string;

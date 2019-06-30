@@ -8,7 +8,7 @@ import { Controller } from '../controller/Controller';
 import { Entity } from '../entity/Params';
 import { HttpServer } from '../HttpServer';
 import { Request, Response } from '../Interfaces';
-import { sessionFromCookie, sessionFromHeader, SessionStorageInMemory } from '../Session';
+import { sessionFromCookie, sessionFromHeader, SessionStorageInMemory } from '../session/Session';
 import { Session } from '../session/Params';
 import { fetch } from '../utils.spec';
 import {
@@ -173,6 +173,7 @@ describe('Router service', () => {
                 );
                 should(result).eql({
                     status: 200,
+                    statusText: "OK",
                     body  : {
                         id  : 'a',
                         test: 'ok'
@@ -201,6 +202,7 @@ describe('Router service', () => {
                 );
                 should(result).eql({
                     status: 200,
+                    statusText: "OK",
                     body  : {
                         id  : 'a',
                         test: 'ok2'
@@ -231,6 +233,7 @@ describe('Router service', () => {
                 );
                 should(result).eql({
                     status: 200,
+                    statusText: "OK",
                     body  : {
                         id  : 'a',
                         test: 'ok2'
@@ -260,6 +263,7 @@ describe('Router service', () => {
                 );
                 should(result).eql({
                     status: 200,
+                    statusText: "OK",
                     body  : {
                         id  : 'b',
                         test: 'put_ok'
@@ -290,313 +294,10 @@ describe('Router service', () => {
                 );
                 should(result).eql({
                     status: 404,
+                    statusText: "Not Found",
                     body  : {
                         id  : 'b',
                         test: 'put_fail'
-                    }
-                });
-            });
-        });
-        describe('errors', () => {
-            it('not found (incorrect controller)', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('put', '/:id')
-                    public async index(req: any, res: Response): Promise<any> {
-                        await sleep(100);
-                        res.status(404);
-                        return {
-                            id  : req.params['id'],
-                            test: 'put_fail'
-                        };
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'put',
-                    'http://127.0.0.1:3000/b?foo=foo'
-                );
-                should(result).eql({
-                    status: 404,
-                    body  : {
-                        code   : 'not-found',
-                        message: 'Not Found'
-                    }
-                });
-            });
-            it('not found (incorrect method)', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('put', '/:id')
-                    public async index(req: any, res: Response): Promise<any> {
-                        await sleep(100);
-                        res.status(404);
-                        return {
-                            id  : req.params['id'],
-                            test: 'put_fail'
-                        };
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'get',
-                    'http://127.0.0.1:3000/b?foo=foo'
-                );
-                should(result).eql({
-                    status: 404,
-                    body  : {
-                        code   : 'not-found',
-                        message: 'Not Found'
-                    }
-                });
-            });
-            it('NotFoundError + async / await', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('get', '/:id')
-                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
-                        await sleep(100);
-                        throw new NotFoundError(-32601, 'No any objects');
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'get',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
-                );
-                should(result).eql({
-                    status: 404,
-                    body  : {
-                        code   : -32601,
-                        message: 'No any objects'
-                    }
-                });
-            });
-            it('standard Error + async / await', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('get', '/:id')
-                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
-                        await sleep(100);
-                        throw new Error('Some error');
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'get',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
-                );
-                should(result).eql({
-                    status: 500,
-                    body  : {
-                        code   : 'server-error',
-                        message: 'Error: Some error',
-                        details: {
-                            stack: [
-                                'TestController.index:393'
-                            ]
-                        }
-                    }
-                });
-            });
-            it('UnauthorizedError + async / await', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('get', '/:id')
-                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
-                        await sleep(100);
-                        throw new UnauthorizedError(-32601, 'Error message');
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'get',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
-                );
-                should(result).eql({
-                    status: 401,
-                    body  : {
-                        code   : -32601,
-                        message: 'Error message'
-                    }
-                });
-            });
-            it('ForbiddenError + async / await', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('get', '/:id')
-                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
-                        await sleep(100);
-                        throw new ForbiddenError(-32601, 'Error message');
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'get',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
-                );
-                should(result).eql({
-                    status: 403,
-                    body  : {
-                        code   : -32601,
-                        message: 'Error message'
-                    }
-                });
-            });
-            it('MethodNotAllowedError + async / await', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('get', '/:id')
-                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
-                        await sleep(100);
-                        throw new MethodNotAllowedError(-32601, 'Error message');
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'get',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
-                );
-                should(result).eql({
-                    status: 405,
-                    body  : {
-                        code   : -32601,
-                        message: 'Error message'
-                    }
-                });
-            });
-            it('IamaTeapotError + async / await', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('get', '/:id')
-                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
-                        await sleep(100);
-                        throw new IamaTeapotError(-32601, 'Error message', { teapot: 'https://en.wikipedia.org/wiki/Teapot' });
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'get',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
-                );
-                should(result).eql({
-                    status: 418,
-                    body  : {
-                        code   : -32601,
-                        message: 'Error message',
-                        details: {
-                            teapot: 'https://en.wikipedia.org/wiki/Teapot'
-                        }
-                    }
-                });
-            });
-            it('UnprocessableEntityError + async / await', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('get', '/:id')
-                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
-                        await sleep(100);
-                        throw new UnprocessableEntityError(-32601, 'Error message');
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'get',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
-                );
-                should(result).eql({
-                    status: 422,
-                    body  : {
-                        code   : -32601,
-                        message: 'Error message'
-                    }
-                });
-            });
-            it('LockedError + async / await', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('get', '/:id')
-                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
-                        await sleep(100);
-                        throw new LockedError(-32601, 'Error message');
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'get',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
-                );
-                should(result).eql({
-                    status: 423,
-                    body  : {
-                        code   : -32601,
-                        message: 'Error message'
-                    }
-                });
-            });
-            it('TooManyRequestsError + async / await', async () => {
-                @Controller('Test controller')
-                class TestController {
-                    @Route('get', '/:id')
-                    public async index(@Path('id') id: string, @HttpResponse() res: Response): Promise<any> {
-                        await sleep(100);
-                        throw new TooManyRequestsError(-32601, 'Error message');
-                    }
-                }
-
-                app = createApp(App);
-                app.server.registerController('/test', TestController);
-                await app.server.listen(3000);
-
-                const result = await fetch(
-                    'get',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
-                );
-                should(result).eql({
-                    status: 429,
-                    body  : {
-                        code   : -32601,
-                        message: 'Error message'
                     }
                 });
             });

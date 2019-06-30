@@ -1,7 +1,4 @@
-import { describe, it } from 'mocha';
 import request, { Response } from 'request';
-import should from 'should';
-import { deepFreeze } from './utils';
 
 /* tslint:disable */
 export function fetch(
@@ -9,7 +6,11 @@ export function fetch(
     url: string,
     body?: object,
     params: any = {}
-): Promise<any> {
+): Promise<{
+    status: number;
+    statusText: string;
+    body: any;
+}> {
     return new Promise((resolve, reject) => {
         params.url    = url;
         params.method = method;
@@ -27,7 +28,8 @@ export function fetch(
                 return reject(error);
 
             const result: any = {
-                status: res.statusCode,
+                status    : res.statusCode,
+                statusText: res.statusMessage,
                 body
             };
 
@@ -73,16 +75,3 @@ export function fetch(
         });
     });
 }
-
-describe('utils', () => {
-    describe('freeze', () => {
-        it('eql', () => {
-            const obj = {
-                foo: 'bar'
-            };
-            const ret = deepFreeze(obj);
-
-            should(ret).equal(obj);
-        });
-    });
-});

@@ -1,3 +1,7 @@
+/**
+ * @module @dunai/server
+ */
+
 import { Type } from '@dunai/core';
 import { checkController, EntitySource } from '../controller/Common';
 

@@ -1,3 +1,7 @@
+/**
+ * @module @dunai/server
+ */
+
 import { addControllerParamDecoration } from '@dunai/core';
 import { IDecoratedParamHttpResolveData } from '../router/Common';
 

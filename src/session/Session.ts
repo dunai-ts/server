@@ -4,8 +4,8 @@
 
 import { Service } from '@dunai/core';
 import { Map } from 'immutable';
-import { changeHeadersBeforeSendMiddleware } from './Headers';
-import { Request, Response } from './Interfaces';
+import { changeHeadersBeforeSendMiddleware } from '../Headers';
+import { Request, Response } from '../Interfaces';
 
 export function sessionFromHeader(header = 'Authorization', tokenType = 'Bearer') {
     return (req: Request, res: Response, next: any) => {

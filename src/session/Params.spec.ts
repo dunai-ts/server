@@ -4,7 +4,7 @@ import { describe, it } from 'mocha';
 import should from 'should';
 import { Application, createApp, HttpServer, Request, Response, Route } from '..';
 import { Controller } from '../controller/Controller';
-import { sessionFromCookie, sessionFromHeader, SessionStorageInMemory } from '../Session';
+import { sessionFromCookie, sessionFromHeader, SessionStorageInMemory } from './Session';
 import { fetch } from '../utils.spec';
 import { Session } from './Params';
 
@@ -75,6 +75,7 @@ describe('Session', () => {
             );
             should(result).eql({
                 status: 200,
+                statusText: "OK",
                 body  : {}
             });
         });
@@ -111,6 +112,7 @@ describe('Session', () => {
             );
             should(result).eql({
                 status: 200,
+                statusText: "OK",
                 body  : {
                     session_id: '935ddceb2f6bbbb78363b224099f75c8'
                 }
@@ -149,6 +151,7 @@ describe('Session', () => {
             );
             should(result).eql({
                 status : 200,
+                statusText: "OK",
                 headers: {
                     cookie: {
                         session: 'changed_session_id'
@@ -197,6 +200,7 @@ describe('Session', () => {
             );
             should(result).eql({
                 status: 200,
+                statusText: "OK",
                 body  : {
                     session_id: '935ddceb2f6bbbb78363b224099f75c8',
                     session   : {}
@@ -215,6 +219,7 @@ describe('Session', () => {
             );
             should(result2).eql({
                 status: 200,
+                statusText: "OK",
                 body  : {
                     session_id: '935ddceb2f6bbbb78363b224099f75c8',
                     session   : {
@@ -260,6 +265,7 @@ describe('Session', () => {
             );
             should(result).eql({
                 status: 200,
+                statusText: "OK",
                 body  : {
                     session_id: 'SESSION_ID',
                     session   : {
@@ -304,6 +310,7 @@ describe('Session', () => {
             );
             should(result).eql({
                 status: 200,
+                statusText: "OK",
                 body  : {
                     session_id: 'SESSION_ID',
                     foo       : 'bar'
@@ -345,6 +352,7 @@ describe('Session', () => {
             );
             should(result).eql({
                 status: 200,
+                statusText: "OK",
                 body  : {}
             });
         });
@@ -372,6 +380,7 @@ describe('Session', () => {
             );
             should(result).eql({
                 status: 200,
+                statusText: "OK",
                 body  : {
                     session_id: 'SESSION_ID',
                     session   : {
@@ -404,6 +413,7 @@ describe('Session', () => {
             );
             should(result).eql({
                 status: 200,
+                statusText: "OK",
                 body  : {
                     session_id: 'SESSION_ID',
                     session   : {
@@ -436,6 +446,7 @@ describe('Session', () => {
             );
             should(result).eql({
                 status: 200,
+                statusText: "OK",
                 body  : {
                     session_id: 'SESSION_ID',
                     foo       : 'bar'

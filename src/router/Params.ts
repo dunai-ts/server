@@ -1,4 +1,8 @@
-import { addControllerParamDecoration } from '@dunai/core/build/main/lib/ParamDecoration';
+/**
+ * @module @dunai/server
+ */
+
+import { addControllerParamDecoration } from '@dunai/core';
 import { IDecoratedParamHttpResolveData } from './Common';
 
 export const ROUTE_PATH_PARAM    = 'PATH';
@@ -47,7 +51,7 @@ export function Query(key?: string) {
 export function Body(key?: string) {
     return addControllerParamDecoration({
         type       : ROUTE_BODY_PARAM,
-        useFunction: (data: IDecoratedParamHttpResolveData) => key ? data.http.body[key] : data.http.body
+        useFunction: (data: IDecoratedParamHttpResolveData) => key ? (data.http.body ? data.http.body[key] : undefined) : data.http.body
     });
 }
 
