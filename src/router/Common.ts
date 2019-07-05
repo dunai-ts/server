@@ -73,7 +73,10 @@ export class RouteMeta {
                                                      .slice(1)
                                                      .map(line => {
                                                          const match: RegExpMatchArray = line.match(/^\s+at\s([\w\.]+).*:(\d+):\d+\)/);
-                                                         return match[1] + ':' + match[2];
+                                                         if (match && match.length > 2)
+                                                             return match[1] + ':' + match[2];
+                                                         else
+                                                             return line;
                                                      })
                         };
 
