@@ -13,3 +13,4 @@ export * from './Common';
 export * from './Headers';
 export * from './HttpServer';
 export * from './Interfaces';
+export * from './ws';

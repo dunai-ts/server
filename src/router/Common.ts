@@ -40,9 +40,9 @@ export interface RouteControllerMeta extends ControllerMeta {
  * @private
  */
 export class RouteMeta {
-    public methods: string[]                = [];
-    public path: string | RegExp            = '/';
-    public action: string                   = null;
+    public methods: string[] = [];
+    public path: string | RegExp = '/';
+    public action: string = null;
     public params: IMethodParamDecoration[] = [];
 
     /**
@@ -61,7 +61,8 @@ export class RouteMeta {
             };
             runMethod(controller, this.action)(data, req, res).then(
                 result => {
-                    res.json(result);
+                    if (result && result !== res)
+                        res.json(result);
                 },
                 error => {
                     let httpError: HttpError;
@@ -70,25 +71,25 @@ export class RouteMeta {
                     } else {
                         const details = {
                             stack: ('' + error.stack).split('\n')
-                                                     .slice(1)
-                                                     .map(line => {
-                                                         const match: RegExpMatchArray = line.match(/^\s+at\s([\w\.]+).*:(\d+):\d+\)/);
-                                                         if (match && match.length > 2)
-                                                             return match[1] + ':' + match[2];
-                                                         else
-                                                             return line;
-                                                     })
+                                .slice(1)
+                                .map(line => {
+                                    const match: RegExpMatchArray = line.match(/^\s+at\s([\w\.]+).*:(\d+):\d+\)/);
+                                    if (match && match.length > 2)
+                                        return match[1] + ':' + match[2];
+                                    else
+                                        return line;
+                                })
                         };
 
                         httpError = new InternalServerError('' + error, -32603, details);
                     }
 
                     res.status(httpError.statusCode)
-                       .json({
-                           code   : httpError.code,
-                           message: httpError.message,
-                           details: httpError.details
-                       });
+                        .json({
+                            code   : httpError.code,
+                            message: httpError.message,
+                            details: httpError.details
+                        });
 
                 }
             );

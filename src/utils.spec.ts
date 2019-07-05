@@ -75,3 +75,7 @@ export function fetch(
         });
     });
 }
+
+export function sleep(timeout = 0): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, timeout));
+}

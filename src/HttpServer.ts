@@ -6,9 +6,11 @@ import { deepFreeze, Injector, Service, Type } from '@dunai/core';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import * as http from 'http';
+import * as Url from 'url';
 import { Request, Response } from './Interfaces';
 import { RouteMeta } from './router/Common';
 import { ISessionStorage, SessionData } from './session/Session';
+import { IWebSocketClientFactory, WebSocketEndpoint } from './ws';
 
 /**
  * HTTP server (bases on express.js)
@@ -49,9 +51,14 @@ export class HttpServer {
     public express: express.Application;
     public server: http.Server;
     public sessionStorage: ISessionStorage;
+    public servedWebSockets: {
+        [key: string]: WebSocketEndpoint;
+    } = {};
 
     constructor() {
+        this.server = http.createServer();
         this.express = express();
+        this.server.on('request', this.express);
         this.express.use(cookieParser());
     }
 
@@ -65,9 +72,9 @@ export class HttpServer {
             this.express.use(sessionKey);
 
         const sessionStorage = Injector.resolve<ISessionStorage>(storage);
-        this.sessionStorage  = sessionStorage;
+        this.sessionStorage = sessionStorage;
         this.express.use((req: Request, res: Response, next: () => void) => {
-            const data  = sessionStorage.get(req.session_id);
+            const data = sessionStorage.get(req.session_id);
             req.session = deepFreeze(data);
             res.session = new SessionData(req.session);
             res.on('finish', () => {
@@ -78,7 +85,21 @@ export class HttpServer {
     }
 
     /**
+     * TODO refactoring, tests
+     * @param options
+     */
+    public webSocket(factory: IWebSocketClientFactory): WebSocketEndpoint;
+    public webSocket(path: string, factory: IWebSocketClientFactory): WebSocketEndpoint;
+    public webSocket(path?: string | IWebSocketClientFactory, factory?: IWebSocketClientFactory): WebSocketEndpoint {
+        if (typeof path === 'string')
+            return this.servedWebSockets[path] = new WebSocketEndpoint(factory);
+        else
+            return this.servedWebSockets['/'] = new WebSocketEndpoint(path);
+    }
+
+    /**
      * Listen port
+     * TODO refactoring, tests
      * @param {number} port
      * @param {string} hostname
      * @return {Promise<void>}
@@ -92,7 +113,20 @@ export class HttpServer {
                 });
             });
 
-            this.server = this.express.listen(port, hostname, resolve);
+            this.server.on('upgrade', (request, socket, head) => {
+                const pathname = Url.parse(request.url).pathname;
+
+                if (pathname in this.servedWebSockets) {
+                    const ws = this.servedWebSockets[pathname];
+                    ws.handleUpgrade(request, socket, head, (client) => {
+                        ws.emit('connection', client, request);
+                    });
+                } else {
+                    socket.destroy();
+                }
+            });
+
+            this.server.listen(port, hostname, resolve);
 
             this.server.addListener('error', (e: any) => {
                 reject(e);

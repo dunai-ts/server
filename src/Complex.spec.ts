@@ -1,6 +1,6 @@
 /* tslint:disable */
 
-import {  Injector } from '@dunai/core';
+import { Injector } from '@dunai/core';
 import { describe, it } from 'mocha';
 import should from 'should';
 import { Application, createApp } from './Application';
@@ -26,14 +26,14 @@ class DefaultController {
     public index(req: any) {
         const urlInfo = url.parse(req.originalUrl);
 
-        return req.res.json({
-            headers: req.headers,
-            method: req.method,
+        return {
+            headers : req.headers,
+            method  : req.method,
             pathname: urlInfo.pathname,
-            params: req.params,
-            query: req.query,
-            ping: 'ok'
-        });
+            params  : req.params,
+            query   : req.query,
+            ping    : 'ok'
+        };
     }
 }
 
@@ -43,33 +43,37 @@ class ApiController {
     public index(req: any, res: any) {
         const urlInfo = url.parse(req.originalUrl);
 
-        return res.json({
-            headers: req.headers,
-            method: req.method,
+        return {
+            headers : req.headers,
+            method  : req.method,
             pathname: urlInfo.pathname,
-            params: req.params,
-            query: req.query,
-            api: 'ok'
-        });
+            params  : req.params,
+            query   : req.query,
+            api     : 'ok'
+        };
     }
 }
+
+let app: App;
 
 describe('HttpServer service', () => {
     beforeEach(() => {
         Injector.reset();
     });
 
+    afterEach(() => {
+        app.server.close();
+    });
+
     describe('listen and close', () => {
         it('port', async () => {
-            const app = createApp(App);
+            app = createApp(App);
 
             await app.server.listen(3000);
 
             await app.server.close();
 
             await app.server.listen(3000);
-
-            await app.server.close();
         });
 
         // it('port + hostname', () => {
@@ -84,7 +88,7 @@ describe('HttpServer service', () => {
     });
     describe('registerController', () => {
         it('404', async () => {
-            const app = createApp(App);
+            app = createApp(App);
             app.init();
 
             await app.server.listen(3000);
@@ -94,39 +98,40 @@ describe('HttpServer service', () => {
                 'http://127.0.0.1:3000/asdaafsda'
             );
             should(result).eql({
-                status: 404,
-                body: 'Page not found.'
+                status    : 404,
+                statusText: 'Not Found',
+                body      : {
+                    code   : -32601,
+                    message: 'Not Found'
+                }
             });
-
-            await app.server.close();
         });
         it('root', async () => {
-            const app = createApp(App);
+            app = createApp(App);
             app.init();
 
             await app.server.listen(3000);
 
             const result = await fetch('get', 'http://127.0.0.1:3000/');
             should(result).eql({
-                status: 200,
-                body: {
-                    headers: {
-                        host: '127.0.0.1:3000',
+                status    : 200,
+                statusText: 'OK',
+                body      : {
+                    headers : {
+                        host            : '127.0.0.1:3000',
                         'content-length': '0',
-                        connection: 'close'
+                        connection      : 'close'
                     },
-                    method: 'GET',
+                    method  : 'GET',
                     pathname: '/',
-                    params: {},
-                    query: {},
-                    ping: 'ok'
+                    params  : {},
+                    query   : {},
+                    ping    : 'ok'
                 }
             });
-
-            await app.server.close();
         });
         it('api with params and get', async () => {
-            const app = createApp(App);
+            app = createApp(App);
             app.init();
 
             await app.server.listen(3000);
@@ -137,25 +142,25 @@ describe('HttpServer service', () => {
             );
             should(result).eql({
                 status: 200,
-                body: {
-                    headers: {
-                        host: '127.0.0.1:3000',
+                statusText: 'OK',
+                body  : {
+                    headers : {
+                        host            : '127.0.0.1:3000',
                         'content-length': '0',
-                        connection: 'close'
+                        connection      : 'close'
                     },
-                    method: 'PUT',
+                    method  : 'PUT',
                     pathname: '/api/a',
-                    params: {
+                    params  : {
                         id: 'a'
                     },
-                    query: {
+                    query   : {
                         asd: 'asd'
                     },
-                    api: 'ok'
+                    api     : 'ok'
                 }
             });
 
-            await app.server.close();
         });
     });
     describe('use handler', () => {});
