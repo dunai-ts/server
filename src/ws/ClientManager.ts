@@ -5,5 +5,7 @@ import { IWSClientManager } from './ClientManager.interface';
 export class WSClientManager<TClient> implements IWSClientManager {
     public clients: TClient[];
 
-    constructor(clientClass)
+    constructor(clientClass: any) {
+
+    }
 }

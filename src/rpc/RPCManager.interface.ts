@@ -1,3 +1,6 @@
+import { Request } from '../Interfaces';
+import { ControllerMeta, EntitySource, IMethodParamDecoration } from '../controller/Common';
+import { RouteMeta } from '../router';
 
 export interface IPayload {
     [key: string | number]: any;
@@ -7,6 +10,8 @@ export interface IPayload {
  * Толбко собирает методы и вызывает их
  */
 export interface IRPCManager {
+    readonly availableMethods: string[];
+
     /**
      * Вызов метода
      * @param method
@@ -26,4 +31,12 @@ export interface IRPCManager {
      * @param response
      */
     encode(response: IPayload): IPayload;
+}
+
+export interface RPCManagerOptions {
+    unknownMethodHandler?: () => void; // TODO
+}
+
+export interface RPCControllerOptions {
+    prefix: string
 }
