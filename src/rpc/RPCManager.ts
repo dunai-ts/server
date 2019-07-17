@@ -1,6 +1,7 @@
-import { Injector, Service, Type } from '@dunai/core';
+import { Injector, runMethod, Service, Type } from '@dunai/core';
 import { IPayload, IRPCManager, RPCControllerOptions, RPCManagerOptions } from './RPCManager.interface';
-import { RPC_CONTROLLER_REFLECT_KEY } from './RPCController';
+import { IRpcControllerMetadata, RPC_METADATA } from './RPCController';
+import { NotFoundError } from '../router';
 
 @Service()
 export class RPCManager implements IRPCManager {
@@ -19,34 +20,38 @@ export class RPCManager implements IRPCManager {
 
         this.methodHandlers = {};
         controllers.forEach(controller => {
-            const ctrlOptions: RPCControllerOptions = {
-                prefix: '',
-                ...Reflect.getMetadata(RPC_CONTROLLER_REFLECT_KEY, controller),
-            };
+
+            const meta: IRpcControllerMetadata = Reflect.getMetadata(RPC_METADATA, controller);
 
             const ctrl = Injector.resolve<any>(controller);
-            const methods = getMethods(ctrl);
 
-            Object.keys(methods).forEach(key => {
-                const method = ctrlOptions.prefix + key;
+            Object.keys(meta.methods).forEach(key => {
+                const method = meta.options.prefix + key;
                 this.methodHandlers[method] = {
-                    method  : methods[key],
+                    method  : meta.methods[key],
                     instance: ctrl,
                 };
             });
         });
     }
 
-    public call(method: string, payload: IPayload, session: IPayload): IPayload {
-        return undefined;
+    public async call(method: string, payload: IPayload, session?: IPayload): Promise<IPayload> {
+        if (this.methodHandlers[method])
+            try {
+                const handler = this.methodHandlers[method];
+                return await runMethod(handler.instance, handler.method)(payload);
+            } catch (e) {
+                throw e;
+            }
+        throw new NotFoundError();
     }
 
     public decode(payload: IPayload): IPayload {
-        return undefined;
+        throw new Error('not implements');
     }
 
     public encode(response: IPayload): IPayload {
-        return undefined;
+        throw new Error('not implements');
     }
 }
 

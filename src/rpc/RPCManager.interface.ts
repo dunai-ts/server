@@ -18,7 +18,7 @@ export interface IRPCManager {
      * @param payload
      * @param session
      */
-    call(method: string, payload: IPayload, session: IPayload): IPayload;
+    call(method: string, payload: IPayload, session?: IPayload): IPayload;
 
     /**
      * Декодирование сырых данных вызова в параметры
