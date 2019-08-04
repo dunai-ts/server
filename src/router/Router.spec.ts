@@ -149,6 +149,88 @@ describe('Router service', () => {
                 '  and must contain at least one action');
         });
     });
+    describe('Methods', () => {
+        it('different methods', async () => {
+            @Controller()
+            class TestController {
+                @Route('get', '/')
+                public get() {
+                    return {
+                        method: 'get'
+                    };
+                }
+                @Route('post', '/')
+                public post() {
+                    return {
+                        method: 'post'
+                    };
+                }
+                @Route(['put', 'patch'], '/')
+                public put() {
+                    return {
+                        method: 'put/patch'
+                    };
+                }
+            }
+
+            @Application()
+            class TestApp {
+                constructor(public server?: HttpServer) { }
+            }
+
+            app = createApp(TestApp) as any;
+            app.server.registerController('/', TestController);
+            await app.server.listen(3000);
+
+            const result = await fetch(
+                'get',
+                'http://127.0.0.1:3000/'
+            );
+            should(result).eql({
+                status    : 200,
+                statusText: 'OK',
+                body      : {
+                    method: 'get'
+                }
+            });
+
+            const result2 = await fetch(
+                'post',
+                'http://127.0.0.1:3000/'
+            );
+            should(result2).eql({
+                status    : 200,
+                statusText: 'OK',
+                body      : {
+                    method: 'post'
+                }
+            });
+
+            const result3 = await fetch(
+                'put',
+                'http://127.0.0.1:3000/'
+            );
+            should(result3).eql({
+                status    : 200,
+                statusText: 'OK',
+                body      : {
+                    method: 'put/patch'
+                }
+            });
+
+            const result4 = await fetch(
+                'patch',
+                'http://127.0.0.1:3000/'
+            );
+            should(result4).eql({
+                status    : 200,
+                statusText: 'OK',
+                body      : {
+                    method: 'put/patch'
+                }
+            });
+        });
+    });
     describe('Routes', () => {
         describe('standard express handler style', () => {
             it('synchronous', async () => {
@@ -172,9 +254,9 @@ describe('Router service', () => {
                     'http://127.0.0.1:3000/test/a?foo=foo'
                 );
                 should(result).eql({
-                    status: 200,
-                    statusText: "OK",
-                    body  : {
+                    status    : 200,
+                    statusText: 'OK',
+                    body      : {
                         id  : 'a',
                         test: 'ok'
                     }
@@ -201,9 +283,9 @@ describe('Router service', () => {
                     'http://127.0.0.1:3000/test/a?foo=foo'
                 );
                 should(result).eql({
-                    status: 200,
-                    statusText: "OK",
-                    body  : {
+                    status    : 200,
+                    statusText: 'OK',
+                    body      : {
                         id  : 'a',
                         test: 'ok2'
                     }
@@ -232,9 +314,9 @@ describe('Router service', () => {
                     'http://127.0.0.1:3000/test/a?foo=foo'
                 );
                 should(result).eql({
-                    status: 200,
-                    statusText: "OK",
-                    body  : {
+                    status    : 200,
+                    statusText: 'OK',
+                    body      : {
                         id  : 'a',
                         test: 'ok2'
                     }
@@ -262,9 +344,9 @@ describe('Router service', () => {
                     'http://127.0.0.1:3000/test/b?foo=foo'
                 );
                 should(result).eql({
-                    status: 200,
-                    statusText: "OK",
-                    body  : {
+                    status    : 200,
+                    statusText: 'OK',
+                    body      : {
                         id  : 'b',
                         test: 'put_ok'
                     }
@@ -293,9 +375,9 @@ describe('Router service', () => {
                     'http://127.0.0.1:3000/test/b?foo=foo'
                 );
                 should(result).eql({
-                    status: 404,
-                    statusText: "Not Found",
-                    body  : {
+                    status    : 404,
+                    statusText: 'Not Found',
+                    body      : {
                         id  : 'b',
                         test: 'put_fail'
                     }

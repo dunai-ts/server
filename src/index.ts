@@ -14,3 +14,4 @@ export * from './Headers';
 export * from './HttpServer';
 export * from './Interfaces';
 export * from './ws';
+export * from './rpc';

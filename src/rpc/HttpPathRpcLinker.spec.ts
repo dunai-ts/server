@@ -5,40 +5,51 @@ import should from 'should';
 import { Application, createApp } from '../Application';
 import { HttpServer } from '../HttpServer';
 import { fetch } from '../utils.spec';
+import { HttpPathRpcLinker } from './HttpPathRpcLinker';
 import { RPCController } from './RPCController';
 import { Method } from './Method';
-
-@Application()
-class App {
-    constructor(public server?: HttpServer) {
-        this.server.use(bodyParser.json() as any);
-    }
-
-    public init(): void {
-        // this.server.registerController('/api', ApiController);
-        // this.server.registerController('/', DefaultController);
-    }
-}
+import { RPCManager } from './RPCManager';
 
 @RPCController('Ping controller')
 class DefaultController {
     @Method('ping')
-    public index(req: any, res: any): void {
-        return res.json({
-            ping: 'ok'
-        });
+    public index(req: any, res: any) {
+        return {
+            ping: 'ok',
+        };
     }
 }
 
 @RPCController('API controller', {
-    prefix: 'data.'
+    prefix: 'data.',
 })
 class ApiController {
     @Method(['put', 'get'])
-    public index(req: any, res: any): void {
-        return res.json({
-            api: 'ok'
-        });
+    public index(req: any, res: any) {
+        return {
+            api: 'ok',
+        };
+    }
+}
+
+@Application()
+class App {
+    public manager: RPCManager;
+
+    constructor(public server?: HttpServer) {
+        this.server.use(bodyParser.json() as any);
+
+        this.manager = new RPCManager([
+            ApiController,
+            DefaultController,
+        ]);
+
+        this.server.registerController(
+            '/api',
+            new HttpPathRpcLinker(
+                this.manager,
+            ),
+        );
     }
 }
 
@@ -54,7 +65,7 @@ describe('Remote Procedure Call', () => {
             error => {
                 if (error.code !== 'ECONNREFUSED')
                     throw new Error('Address is busy');
-            }
+            },
         );
     });
     afterEach(async () => {
@@ -70,15 +81,14 @@ describe('Remote Procedure Call', () => {
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo'
+                    'http://127.0.0.1:3000/api/ping',
                 );
                 should(result).eql({
                     status    : 200,
                     statusText: 'OK',
                     body      : {
-                        id  : 'a',
-                        test: 'ok'
-                    }
+                        ping: 'ok',
+                    },
                 });
             });
 

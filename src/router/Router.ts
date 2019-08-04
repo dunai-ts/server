@@ -40,7 +40,7 @@ export function Route(method: string | string[], path: string | RegExp);
 export function Route(methods: any, path?: any) {
     /* tslint:disable:no-parameter-reassignment */
     if (path === void 0) {
-        path    = methods;
+        path = methods;
         methods = [];
     }
 
@@ -87,12 +87,12 @@ export function Route(methods: any, path?: any) {
             'unsubscribe'
         ];
 
-        const routeMeta: RouteMeta  = new RouteMeta();
-        routeMeta.methods           = methods.filter(
+        const routeMeta: RouteMeta = new RouteMeta();
+        routeMeta.methods = methods.filter(
             (method: string) => availableMethods.indexOf(method) !== -1
         );
-        routeMeta.path              = path;
-        routeMeta.action            = propertyKey;
+        routeMeta.path = path;
+        routeMeta.action = propertyKey;
         target._routes[propertyKey] = routeMeta;
 
         return descriptor;

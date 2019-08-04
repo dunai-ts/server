@@ -1,5 +1,5 @@
 import { Injector, runMethod, Service, Type } from '@dunai/core';
-import { IPayload, IRPCManager, RPCControllerOptions, RPCManagerOptions } from './RPCManager.interface';
+import { IPayload, IRPCManager, RPCManagerOptions } from './RPCManager.interface';
 import { IRpcControllerMetadata, RPC_METADATA } from './RPCController';
 import { NotFoundError } from '../router';
 
@@ -39,7 +39,8 @@ export class RPCManager implements IRPCManager {
         if (this.methodHandlers[method])
             try {
                 const handler = this.methodHandlers[method];
-                return await runMethod(handler.instance, handler.method)(payload);
+                const result = await runMethod(handler.instance, handler.method)(payload);
+                return this.encode(result);
             } catch (e) {
                 throw e;
             }
@@ -51,7 +52,7 @@ export class RPCManager implements IRPCManager {
     }
 
     public encode(response: IPayload): IPayload {
-        throw new Error('not implements');
+        return response;
     }
 }
 

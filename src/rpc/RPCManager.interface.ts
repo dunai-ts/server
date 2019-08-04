@@ -2,9 +2,7 @@ import { Request } from '../Interfaces';
 import { ControllerMeta, EntitySource, IMethodParamDecoration } from '../controller/Common';
 import { RouteMeta } from '../router';
 
-export interface IPayload {
-    [key: string | number]: any;
-}
+export type IPayload = any;
 
 /**
  * Толбко собирает методы и вызывает их
