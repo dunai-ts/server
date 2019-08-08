@@ -8,7 +8,11 @@ import { Controller } from '../controller/Controller';
 import { Entity } from '../entity/Params';
 import { HttpServer } from '../HttpServer';
 import { Request, Response } from '../Interfaces';
-import { sessionFromCookie, sessionFromHeader, SessionStorageInMemory } from '../session/Session';
+import {
+    sessionFromCookie,
+    sessionFromHeader,
+    SessionStorageInMemory,
+} from '../session/Session';
 import { Session } from '../session/Params';
 import { fetch } from '../utils.spec';
 import {
@@ -17,7 +21,7 @@ import {
     MethodNotAllowedError,
     NotFoundError, TooManyRequestsError,
     UnauthorizedError,
-    UnprocessableEntityError
+    UnprocessableEntityError,
 } from './Errors';
 import { Body, HttpResponse, Path, Query } from './Params';
 import { Action, Route } from './Router';
@@ -39,7 +43,7 @@ class DefaultController {
     @Route('/')
     public index(req: any, res: any): void {
         return res.json({
-            ping: 'ok'
+            ping: 'ok',
         });
     }
 }
@@ -49,7 +53,7 @@ class ApiController {
     @Route(['put', 'get'], '/:id')
     public index(req: any, res: any): void {
         return res.json({
-            api: 'ok'
+            api: 'ok',
         });
     }
 }
@@ -66,7 +70,7 @@ describe('Router service', () => {
             error => {
                 if (error.code !== 'ECONNREFUSED')
                     throw new Error('Address is busy');
-            }
+            },
         );
     });
     afterEach(async () => {
@@ -75,7 +79,7 @@ describe('Router service', () => {
         app = null;
     });
     describe('Controller', () => {
-        it('standard controller', () => {
+        it('controller from class', () => {
             @Controller()
             class TestController {
                 @Action('/')
@@ -95,29 +99,53 @@ describe('Router service', () => {
 
             should(app).ok();
         });
-        // it('prepared controller', () => {
-        //    @Controller()
-        //    class TestController {
-        //        @Route('/')
-        //        public index() {
-        //            // ok
-        //        }
-        //    }
-        //
-        //    const controller = new TestController()
-        //
-        //    @Application()
-        //    class TestApp {
-        //        constructor(public server?: HttpServer) { }
-        //    }
-        //
-        //    const app = createApp(TestApp) as any;
-        //
-        //    app.server.registerController('/', controller);
-        //    app.server.registerController('/api', controller);
-        //
-        //    should(app).ok();
-        // });
+        it('controller from instance', async () => {
+            @Controller()
+            class TestController {
+                @Route('/')
+                public index() {
+                    return { foo: 'bar' };
+                }
+            }
+
+            const controller: TestController = Injector.resolve(TestController);
+
+            @Application()
+            class TestApp {
+                constructor(public server?: HttpServer) { }
+            }
+
+            app = createApp(TestApp) as any;
+
+            app.server.registerController('/', controller);
+            app.server.registerController('/api', controller);
+            await app.server.listen(3000);
+
+            const result = await fetch(
+                'get',
+                'http://127.0.0.1:3000/',
+            );
+            should(result).eql({
+                status    : 200,
+                statusText: 'OK',
+                body      : {
+                    foo: 'bar',
+                },
+            });
+
+
+            const resultApi = await fetch(
+                'get',
+                'http://127.0.0.1:3000/api/',
+            );
+            should(result).eql({
+                status    : 200,
+                statusText: 'OK',
+                body      : {
+                    foo: 'bar',
+                },
+            });
+        });
         it('error if controller not contains actions', () => {
             @Controller()
             class TestController {
@@ -156,19 +184,21 @@ describe('Router service', () => {
                 @Route('get', '/')
                 public get() {
                     return {
-                        method: 'get'
+                        method: 'get',
                     };
                 }
+
                 @Route('post', '/')
                 public post() {
                     return {
-                        method: 'post'
+                        method: 'post',
                     };
                 }
+
                 @Route(['put', 'patch'], '/')
                 public put() {
                     return {
-                        method: 'put/patch'
+                        method: 'put/patch',
                     };
                 }
             }
@@ -184,50 +214,50 @@ describe('Router service', () => {
 
             const result = await fetch(
                 'get',
-                'http://127.0.0.1:3000/'
+                'http://127.0.0.1:3000/',
             );
             should(result).eql({
                 status    : 200,
                 statusText: 'OK',
                 body      : {
-                    method: 'get'
-                }
+                    method: 'get',
+                },
             });
 
             const result2 = await fetch(
                 'post',
-                'http://127.0.0.1:3000/'
+                'http://127.0.0.1:3000/',
             );
             should(result2).eql({
                 status    : 200,
                 statusText: 'OK',
                 body      : {
-                    method: 'post'
-                }
+                    method: 'post',
+                },
             });
 
             const result3 = await fetch(
                 'put',
-                'http://127.0.0.1:3000/'
+                'http://127.0.0.1:3000/',
             );
             should(result3).eql({
                 status    : 200,
                 statusText: 'OK',
                 body      : {
-                    method: 'put/patch'
-                }
+                    method: 'put/patch',
+                },
             });
 
             const result4 = await fetch(
                 'patch',
-                'http://127.0.0.1:3000/'
+                'http://127.0.0.1:3000/',
             );
             should(result4).eql({
                 status    : 200,
                 statusText: 'OK',
                 body      : {
-                    method: 'put/patch'
-                }
+                    method: 'put/patch',
+                },
             });
         });
     });
@@ -240,7 +270,7 @@ describe('Router service', () => {
                     public index(req: any, res: any): void {
                         res.json({
                             id  : req.params['id'],
-                            test: 'ok'
+                            test: 'ok',
                         });
                     }
                 }
@@ -251,15 +281,15 @@ describe('Router service', () => {
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo'
+                    'http://127.0.0.1:3000/test/a?foo=foo',
                 );
                 should(result).eql({
                     status    : 200,
                     statusText: 'OK',
                     body      : {
                         id  : 'a',
-                        test: 'ok'
-                    }
+                        test: 'ok',
+                    },
                 });
             });
             it('asynchronous (async / await)', async () => {
@@ -269,7 +299,7 @@ describe('Router service', () => {
                     public async index(req: any, res: any): Promise<void> {
                         res.json({
                             id  : req.params['id'],
-                            test: 'ok2'
+                            test: 'ok2',
                         });
                     }
                 }
@@ -280,15 +310,15 @@ describe('Router service', () => {
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo'
+                    'http://127.0.0.1:3000/test/a?foo=foo',
                 );
                 should(result).eql({
                     status    : 200,
                     statusText: 'OK',
                     body      : {
                         id  : 'a',
-                        test: 'ok2'
-                    }
+                        test: 'ok2',
+                    },
                 });
             });
         });
@@ -300,7 +330,7 @@ describe('Router service', () => {
                     public index(req: any, res: any): any {
                         return {
                             id  : req.params['id'],
-                            test: 'ok2'
+                            test: 'ok2',
                         };
                     }
                 }
@@ -311,15 +341,15 @@ describe('Router service', () => {
 
                 const result = await fetch(
                     'get',
-                    'http://127.0.0.1:3000/test/a?foo=foo'
+                    'http://127.0.0.1:3000/test/a?foo=foo',
                 );
                 should(result).eql({
                     status    : 200,
                     statusText: 'OK',
                     body      : {
                         id  : 'a',
-                        test: 'ok2'
-                    }
+                        test: 'ok2',
+                    },
                 });
             });
             it('asynchronous (async / await)', async () => {
@@ -330,7 +360,7 @@ describe('Router service', () => {
                         await sleep(100);
                         return {
                             id  : req.params['id'],
-                            test: 'put_ok'
+                            test: 'put_ok',
                         };
                     }
                 }
@@ -341,15 +371,15 @@ describe('Router service', () => {
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
+                    'http://127.0.0.1:3000/test/b?foo=foo',
                 );
                 should(result).eql({
                     status    : 200,
                     statusText: 'OK',
                     body      : {
                         id  : 'b',
-                        test: 'put_ok'
-                    }
+                        test: 'put_ok',
+                    },
                 });
             });
             it('asynchronous + set status (async / await)', async () => {
@@ -361,7 +391,7 @@ describe('Router service', () => {
                         res.status(404);
                         return {
                             id,
-                            test: 'put_fail'
+                            test: 'put_fail',
                         };
                     }
                 }
@@ -372,15 +402,15 @@ describe('Router service', () => {
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
+                    'http://127.0.0.1:3000/test/b?foo=foo',
                 );
                 should(result).eql({
                     status    : 404,
                     statusText: 'Not Found',
                     body      : {
                         id  : 'b',
-                        test: 'put_fail'
-                    }
+                        test: 'put_fail',
+                    },
                 });
             });
         });

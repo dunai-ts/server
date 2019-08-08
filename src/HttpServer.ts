@@ -32,7 +32,7 @@ export class HttpServer {
             typeof controller._routes !== 'object'
         ) {
             console.log(
-                `Error in controller "${controller.constructor.toString()}"`
+                `Error in controller "${controller.constructor.toString()}"`,
             );
             throw new Error(`Controller must be decorated by @Controller\n  and must contain at least one action`);
         }
@@ -109,7 +109,7 @@ export class HttpServer {
             this.express.all('*', (req, res) => {
                 res.status(404).send({
                     code   : -32601,
-                    message: 'Not Found'
+                    message: 'Not Found',
                 });
             });
 
@@ -173,7 +173,15 @@ export class HttpServer {
      * @param controller Controller, decorated @Controller
      */
     public registerController(url: string | RegExp, controller: any): void {
-        const ctrl = Injector.resolve<any>(controller);
+        let ctrl: any;
+        try {
+            ctrl = Injector.resolve<any>(controller);
+        } catch (error) {
+            if (error.message === 'target is not a constructor')
+                ctrl = controller;
+            else
+                throw error;
+        }
 
         const actions = HttpServer.getControllerRoutes(ctrl);
 
