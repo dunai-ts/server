@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.1.7"></a>
+## [0.1.7](https://github.com/dunai-ts/server/compare/v0.1.6...v0.1.7) (2019-10-02)
+
+
+### Features
+
+* **rpc:** JsonRPC ([b23bd65](https://github.com/dunai-ts/server/commit/b23bd65))
+
+
+
 <a name="0.1.6"></a>
 ## [0.1.6](https://github.com/dunai-ts/server/compare/v0.1.5...v0.1.6) (2019-10-02)
 
