@@ -1,6 +1,6 @@
 {
   "name": "@dunai/server",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "TypeScript framework bases on express.js",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
