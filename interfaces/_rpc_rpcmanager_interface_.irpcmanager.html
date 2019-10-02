@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>ActionMeta | @dunai/server</title>
+	<title>IRPCManager | @dunai/server</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -56,13 +56,13 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../modules/_dunai_server.html">@dunai/server</a>
+					<a href="../modules/_rpc_rpcmanager_interface_.html">&quot;rpc/RPCManager.interface&quot;</a>
 				</li>
 				<li>
-					<a href="_dunai_server.actionmeta.html">ActionMeta</a>
+					<a href="_rpc_rpcmanager_interface_.irpcmanager.html">IRPCManager</a>
 				</li>
 			</ul>
-			<h1>Class ActionMeta</h1>
+			<h1>Interface IRPCManager</h1>
 		</div>
 	</div>
 </header>
@@ -72,7 +72,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Action metadata</p>
+						<p>Только собирает методы и вызывает их</p>
 					</div>
 				</div>
 			</section>
@@ -80,8 +80,14 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">ActionMeta</span>
+						<span class="target">IRPCManager</span>
 					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel">
+				<h3>Implemented by</h3>
+				<ul class="tsd-hierarchy">
+					<li><a href="../classes/_rpc_rpcmanager_.rpcmanager.html" class="tsd-signature-type">RPCManager</a></li>
 				</ul>
 			</section>
 			<section class="tsd-panel-group tsd-index-group">
@@ -91,16 +97,15 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_dunai_server.actionmeta.html#action" class="tsd-kind-icon">action</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_dunai_server.actionmeta.html#methods" class="tsd-kind-icon">methods</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_dunai_server.actionmeta.html#params" class="tsd-kind-icon">params</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_dunai_server.actionmeta.html#path" class="tsd-kind-icon">path</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_rpc_rpcmanager_interface_.irpcmanager.html#availablemethods" class="tsd-kind-icon">available<wbr>Methods</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_dunai_server.actionmeta.html#bind" class="tsd-kind-icon">bind</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_rpc_rpcmanager_interface_.irpcmanager.html#call" class="tsd-kind-icon">call</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_rpc_rpcmanager_interface_.irpcmanager.html#decode" class="tsd-kind-icon">decode</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_rpc_rpcmanager_interface_.irpcmanager.html#encode" class="tsd-kind-icon">encode</a></li>
 							</ul>
 						</section>
 					</div>
@@ -108,79 +113,112 @@
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="action" class="tsd-anchor"></a>
-					<h3>action</h3>
-					<div class="tsd-signature tsd-kind-icon">action<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;null</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="availablemethods" class="tsd-anchor"></a>
+					<h3>available<wbr>Methods</h3>
+					<div class="tsd-signature tsd-kind-icon">available<wbr>Methods<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dunai-ts/http-server/blob/b72572d/src/lib/Common.ts#L34">lib/Common.ts:34</a></li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="methods" class="tsd-anchor"></a>
-					<h3>methods</h3>
-					<div class="tsd-signature tsd-kind-icon">methods<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[]</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/dunai-ts/http-server/blob/b72572d/src/lib/Common.ts#L32">lib/Common.ts:32</a></li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="params" class="tsd-anchor"></a>
-					<h3>params</h3>
-					<div class="tsd-signature tsd-kind-icon">params<span class="tsd-signature-symbol">:</span> <a href="../interfaces/_dunai_server.irouteparam.html" class="tsd-signature-type">IRouteParam</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[]</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/dunai-ts/http-server/blob/b72572d/src/lib/Common.ts#L35">lib/Common.ts:35</a></li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="path" class="tsd-anchor"></a>
-					<h3>path</h3>
-					<div class="tsd-signature tsd-kind-icon">path<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">RegExp</span><span class="tsd-signature-symbol"> =&nbsp;&quot;/&quot;</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/dunai-ts/http-server/blob/b72572d/src/lib/Common.ts#L33">lib/Common.ts:33</a></li>
+							<li>Defined in <a href="https://github.com/dunai-ts/server/blob/f4ad877/src/rpc/RPCManager.interface.ts#L7">rpc/RPCManager.interface.ts:7</a></li>
 						</ul>
 					</aside>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="bind" class="tsd-anchor"></a>
-					<h3>bind</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">bind<span class="tsd-signature-symbol">(</span>router<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Router</span>, controller<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Type</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> &amp; </span><a href="../interfaces/_dunai_server.controllermeta.html" class="tsd-signature-type">ControllerMeta</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
+					<a name="call" class="tsd-anchor"></a>
+					<h3>call</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
+						<li class="tsd-signature tsd-kind-icon">call<span class="tsd-signature-symbol">(</span>method<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, payload<span class="tsd-signature-symbol">: </span><a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a>, session<span class="tsd-signature-symbol">?: </span><a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/dunai-ts/http-server/blob/b72572d/src/lib/Common.ts#L42">lib/Common.ts:42</a></li>
+									<li>Defined in <a href="https://github.com/dunai-ts/server/blob/f4ad877/src/rpc/RPCManager.interface.ts#L15">rpc/RPCManager.interface.ts:15</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Bind action to express</p>
+									<p>Вызов метода</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>router: <span class="tsd-signature-type">Router</span></h5>
+									<h5>method: <span class="tsd-signature-type">string</span></h5>
 								</li>
 								<li>
-									<h5>controller: <span class="tsd-signature-type">Type</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> &amp; </span><a href="../interfaces/_dunai_server.controllermeta.html" class="tsd-signature-type">ControllerMeta</a></h5>
+									<h5>payload: <a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> session: <a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a></h5>
 									<div class="tsd-comment tsd-typography">
 									</div>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+							<h4 class="tsd-returns-title">Returns <a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
+					<a name="decode" class="tsd-anchor"></a>
+					<h3>decode</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
+						<li class="tsd-signature tsd-kind-icon">decode<span class="tsd-signature-symbol">(</span>payload<span class="tsd-signature-symbol">: </span><a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dunai-ts/server/blob/f4ad877/src/rpc/RPCManager.interface.ts#L21">rpc/RPCManager.interface.ts:21</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Декодирование сырых данных вызова в параметры</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>payload: <a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a></h5>
+									<div class="tsd-comment tsd-typography">
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
+					<a name="encode" class="tsd-anchor"></a>
+					<h3>encode</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
+						<li class="tsd-signature tsd-kind-icon">encode<span class="tsd-signature-symbol">(</span>response<span class="tsd-signature-symbol">: </span><a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dunai-ts/server/blob/f4ad877/src/rpc/RPCManager.interface.ts#L27">rpc/RPCManager.interface.ts:27</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Форматирование ответа метода</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>response: <a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a></h5>
+									<div class="tsd-comment tsd-typography">
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-signature-type">IPayload</a></h4>
 						</li>
 					</ul>
 				</section>
@@ -192,87 +230,63 @@
 					<li class="globals  ">
 						<a href="../globals.html"><em>Globals</em></a>
 					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_controller_index_.html">"controller/index"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_entity_index_.html">"entity/index"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_router_index_.html">"router/index"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_rpc_method_.html">"rpc/<wbr>Method"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_rpc_rpcmanager_.html">"rpc/RPCManager"</a>
+					</li>
 					<li class="current tsd-kind-external-module">
+						<a href="../modules/_rpc_rpcmanager_interface_.html">"rpc/RPCManager.interface"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_rpc_index_.html">"rpc/index"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
 						<a href="../modules/_dunai_server.html">@dunai/server</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-enum tsd-parent-kind-external-module tsd-is-private">
-						<a href="../enums/_dunai_server.routeparamtype.html" class="tsd-kind-icon">Route<wbr>Param<wbr>Type</a>
-					</li>
 				</ul>
 				<ul class="current">
-					<li class="current tsd-kind-class tsd-parent-kind-external-module tsd-is-private">
-						<a href="_dunai_server.actionmeta.html" class="tsd-kind-icon">Action<wbr>Meta</a>
+					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_rpc_rpcmanager_interface_.irpcmanager.html" class="tsd-kind-icon">IRPCManager</a>
 						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="_dunai_server.actionmeta.html#action" class="tsd-kind-icon">action</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_rpc_rpcmanager_interface_.irpcmanager.html#availablemethods" class="tsd-kind-icon">available<wbr>Methods</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="_dunai_server.actionmeta.html#methods" class="tsd-kind-icon">methods</a>
+							<li class=" tsd-kind-method tsd-parent-kind-interface">
+								<a href="_rpc_rpcmanager_interface_.irpcmanager.html#call" class="tsd-kind-icon">call</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="_dunai_server.actionmeta.html#params" class="tsd-kind-icon">params</a>
+							<li class=" tsd-kind-method tsd-parent-kind-interface">
+								<a href="_rpc_rpcmanager_interface_.irpcmanager.html#decode" class="tsd-kind-icon">decode</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="_dunai_server.actionmeta.html#path" class="tsd-kind-icon">path</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="_dunai_server.actionmeta.html#bind" class="tsd-kind-icon">bind</a>
+							<li class=" tsd-kind-method tsd-parent-kind-interface">
+								<a href="_rpc_rpcmanager_interface_.irpcmanager.html#encode" class="tsd-kind-icon">encode</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="_dunai_server.httpserver.html" class="tsd-kind-icon">Http<wbr>Server</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module tsd-is-private">
-						<a href="../interfaces/_dunai_server.controlleractions.html" class="tsd-kind-icon">Controller<wbr>Actions</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module tsd-is-private">
-						<a href="../interfaces/_dunai_server.controllermeta.html" class="tsd-kind-icon">Controller<wbr>Meta</a>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_rpc_rpcmanager_interface_.rpccontrolleroptions.html" class="tsd-kind-icon">RPCController<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/_dunai_server.entityerror.html" class="tsd-kind-icon">Entity<wbr>Error</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module tsd-is-private">
-						<a href="../interfaces/_dunai_server.irouteparam.html" class="tsd-kind-icon">IRoute<wbr>Param</a>
+						<a href="_rpc_rpcmanager_interface_.rpcmanageroptions.html" class="tsd-kind-icon">RPCManager<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
-						<a href="../modules/_dunai_server.html#entitysource" class="tsd-kind-icon">Entity<wbr>Source</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/_dunai_server.html#action" class="tsd-kind-icon">Action</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/_dunai_server.html#application" class="tsd-kind-icon">Application</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/_dunai_server.html#body" class="tsd-kind-icon">Body</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/_dunai_server.html#controller" class="tsd-kind-icon">Controller</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/_dunai_server.html#entity" class="tsd-kind-icon">Entity</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/_dunai_server.html#path" class="tsd-kind-icon">Path</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/_dunai_server.html#query" class="tsd-kind-icon">Query</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-private tsd-is-not-exported">
-						<a href="../modules/_dunai_server.html#addrouteparam" class="tsd-kind-icon">add<wbr>Route<wbr>Param</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-has-type-parameter tsd-is-private tsd-is-not-exported">
-						<a href="../modules/_dunai_server.html#checkcontroller" class="tsd-kind-icon">check<wbr>Controller</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-has-type-parameter">
-						<a href="../modules/_dunai_server.html#createapp" class="tsd-kind-icon">create<wbr>App</a>
+						<a href="../modules/_rpc_rpcmanager_interface_.html#ipayload" class="tsd-kind-icon">IPayload</a>
 					</li>
 				</ul>
 			</nav>
