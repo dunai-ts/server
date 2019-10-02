@@ -5,7 +5,6 @@ import { Method } from './Method';
 import { Param } from './Param';
 import { RPCController } from './RPCController';
 import { RPCManager } from './RPCManager';
-import { Session } from '../session';
 
 @RPCController('Base controller', {
     prefix: 'base.',
@@ -148,10 +147,10 @@ describe('Remote Procedure Call', () => {
 
         it('call overload decorated (not exists) method "base"', async () => {
             manager.call('base', { index: 2 })
-                .then(
-                    () => should('Method must return error'),
-                    () => should(true).true(),
-                );
+                   .then(
+                       () => should('Method must return error'),
+                       () => should(true).true(),
+                   );
         });
 
         it('call own method with prefix "data.get"', async () => {
@@ -172,25 +171,26 @@ describe('Remote Procedure Call', () => {
             });
         });
 
-        // it('minimum', async () => {
-        //     const manager = new RPCManager([
-        //         DefaultController,
-        //         ApiController,
-        //     ]);
-        //
-        //     const result = manager.call(
-        //         'ping',
-        //         {
-        //             index: 1,
-        //         },
-        //         {},
-        //     );
-        //
-        //     should(result).eql({
-        //         ping : 'ok',
-        //         index: 1,
-        //     });
-        // });
+        it('minimum', async () => {
+            manager = new RPCManager([
+                DefaultController,
+                ApiController,
+            ]);
+
+            const result = await manager.call(
+                'ping',
+                {
+                    index: 1,
+                },
+                {},
+            );
+
+            should(result).eql({
+                ctrl  : 'default',
+                method: 'ping',
+                index : 1,
+            });
+        });
     });
 });
 
