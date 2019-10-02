@@ -3,7 +3,6 @@
  */
 
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
-import { SessionData } from './session/Session';
 
 export interface Request extends ExpressRequest {
     session_id?: string;
@@ -13,5 +12,5 @@ export interface Request extends ExpressRequest {
 // tslint:disable-next-line
 export interface Response extends ExpressResponse {
     session_id?: string;
-    session?: SessionData;
+    session?: any;
 }

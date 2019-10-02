@@ -3,23 +3,11 @@ import bodyParser from 'body-parser';
 import { describe, it } from 'mocha';
 import should from 'should';
 import { Application, createApp } from '../Application';
-import { EntityError } from '../Common';
 import { Controller } from '../controller/Controller';
-import { Entity } from '../entity/Params';
 import { HttpServer } from '../HttpServer';
-import { Request, Response } from '../Interfaces';
-import { sessionFromCookie, sessionFromHeader, SessionStorageInMemory } from '../session/Session';
-import { Session } from '../session/Params';
+import { Response } from '../Interfaces';
 import { fetch } from '../utils.spec';
-import {
-    ForbiddenError,
-    IamaTeapotError, LockedError,
-    MethodNotAllowedError,
-    NotFoundError, TooManyRequestsError,
-    UnauthorizedError,
-    UnprocessableEntityError
-} from './Errors';
-import { Body, HttpResponse, Path, Query } from './Params';
+import { HttpResponse, Path } from './Params';
 import { Action, Route } from './Router';
 
 @Application()
@@ -39,7 +27,7 @@ class DefaultController {
     @Route('/')
     public index(req: any, res: any): void {
         return res.json({
-            ping: 'ok'
+            ping: 'ok',
         });
     }
 }
@@ -49,7 +37,7 @@ class ApiController {
     @Route(['put', 'get'], '/:id')
     public index(req: any, res: any): void {
         return res.json({
-            api: 'ok'
+            api: 'ok',
         });
     }
 }
@@ -66,7 +54,7 @@ describe('Router service', () => {
             error => {
                 if (error.code !== 'ECONNREFUSED')
                     throw new Error('Address is busy');
-            }
+            },
         );
     });
     afterEach(async () => {
@@ -158,7 +146,7 @@ describe('Router service', () => {
                     public index(req: any, res: any): void {
                         res.json({
                             id  : req.params['id'],
-                            test: 'ok'
+                            test: 'ok',
                         });
                     }
                 }
@@ -169,15 +157,15 @@ describe('Router service', () => {
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo'
+                    'http://127.0.0.1:3000/test/a?foo=foo',
                 );
                 should(result).eql({
-                    status: 200,
-                    statusText: "OK",
-                    body  : {
+                    status    : 200,
+                    statusText: 'OK',
+                    body      : {
                         id  : 'a',
-                        test: 'ok'
-                    }
+                        test: 'ok',
+                    },
                 });
             });
             it('asynchronous (async / await)', async () => {
@@ -187,7 +175,7 @@ describe('Router service', () => {
                     public async index(req: any, res: any): Promise<void> {
                         res.json({
                             id  : req.params['id'],
-                            test: 'ok2'
+                            test: 'ok2',
                         });
                     }
                 }
@@ -198,15 +186,15 @@ describe('Router service', () => {
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/a?foo=foo'
+                    'http://127.0.0.1:3000/test/a?foo=foo',
                 );
                 should(result).eql({
-                    status: 200,
-                    statusText: "OK",
-                    body  : {
+                    status    : 200,
+                    statusText: 'OK',
+                    body      : {
                         id  : 'a',
-                        test: 'ok2'
-                    }
+                        test: 'ok2',
+                    },
                 });
             });
         });
@@ -218,7 +206,7 @@ describe('Router service', () => {
                     public index(req: any, res: any): any {
                         return {
                             id  : req.params['id'],
-                            test: 'ok2'
+                            test: 'ok2',
                         };
                     }
                 }
@@ -229,15 +217,15 @@ describe('Router service', () => {
 
                 const result = await fetch(
                     'get',
-                    'http://127.0.0.1:3000/test/a?foo=foo'
+                    'http://127.0.0.1:3000/test/a?foo=foo',
                 );
                 should(result).eql({
-                    status: 200,
-                    statusText: "OK",
-                    body  : {
+                    status    : 200,
+                    statusText: 'OK',
+                    body      : {
                         id  : 'a',
-                        test: 'ok2'
-                    }
+                        test: 'ok2',
+                    },
                 });
             });
             it('asynchronous (async / await)', async () => {
@@ -248,7 +236,7 @@ describe('Router service', () => {
                         await sleep(100);
                         return {
                             id  : req.params['id'],
-                            test: 'put_ok'
+                            test: 'put_ok',
                         };
                     }
                 }
@@ -259,15 +247,15 @@ describe('Router service', () => {
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
+                    'http://127.0.0.1:3000/test/b?foo=foo',
                 );
                 should(result).eql({
-                    status: 200,
-                    statusText: "OK",
-                    body  : {
+                    status    : 200,
+                    statusText: 'OK',
+                    body      : {
                         id  : 'b',
-                        test: 'put_ok'
-                    }
+                        test: 'put_ok',
+                    },
                 });
             });
             it('asynchronous + set status (async / await)', async () => {
@@ -279,7 +267,7 @@ describe('Router service', () => {
                         res.status(404);
                         return {
                             id,
-                            test: 'put_fail'
+                            test: 'put_fail',
                         };
                     }
                 }
@@ -290,15 +278,15 @@ describe('Router service', () => {
 
                 const result = await fetch(
                     'put',
-                    'http://127.0.0.1:3000/test/b?foo=foo'
+                    'http://127.0.0.1:3000/test/b?foo=foo',
                 );
                 should(result).eql({
-                    status: 404,
-                    statusText: "Not Found",
-                    body  : {
+                    status    : 404,
+                    statusText: 'Not Found',
+                    body      : {
                         id  : 'b',
-                        test: 'put_fail'
-                    }
+                        test: 'put_fail',
+                    },
                 });
             });
         });

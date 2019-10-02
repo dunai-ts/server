@@ -40,9 +40,9 @@ export interface RouteControllerMeta extends ControllerMeta {
  * @private
  */
 export class RouteMeta {
-    public methods: string[]                = [];
-    public path: string | RegExp            = '/';
-    public action: string                   = null;
+    public methods: string[] = [];
+    public path: string | RegExp = '/';
+    public action: string = null;
     public params: IMethodParamDecoration[] = [];
 
     /**
@@ -53,7 +53,7 @@ export class RouteMeta {
     public bind(router: Router, controller: Type<any> & RouteControllerMeta): void {
         // console.log(`Bind action "${this.methods} ${this.path}" to "${this.action}"`);
 
-        if (this.methods.length) this.methods = ['all'];
+        if (!this.methods.length) this.methods = ['all'];
 
         const handler = (req: Request, res: Response) => {
             const data: IDecoratedParamHttpResolveData = {
@@ -61,7 +61,8 @@ export class RouteMeta {
             };
             runMethod(controller, this.action)(data, req, res).then(
                 result => {
-                    res.json(result);
+                    if (result && result !== res)
+                        res.json(result);
                 },
                 error => {
                     let httpError: HttpError;
@@ -92,31 +93,6 @@ export class RouteMeta {
 
                 }
             );
-            //Promise.all(prepare).then(
-            //    resolved => controller[this.action](...resolved),
-            //    (reject: Error | string) => {
-            //        if (params[0] === req) params[0] = '[request]';
-            //        if (params[1] === res) params[1] = '[response]';
-            //
-            //        let reason: Error = null;
-            //        if (typeof reject === 'object') reason = reject;
-            //        else
-            //            reason = {
-            //                name   : 'Unknown',
-            //                message: reject
-            //            };
-            //
-            //        const error: EntityError = {
-            //            ...reason,
-            //            message: reason.message,
-            //            meta   : this,
-            //            params
-            //        };
-            //        if (typeof controller['error'] === 'function') {
-            //            controller['error'](req, res, error);
-            //        } else res.status(404).json('Not found');
-            //    }
-            //);
         };
 
         this.methods.forEach(method => router[method](this.path, handler));

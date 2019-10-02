@@ -2,13 +2,12 @@
  * @module @dunai/server
  */
 
-import { deepFreeze, Injector, Service, Type } from '@dunai/core';
+import { Injector, Service } from '@dunai/core';
+import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import * as http from 'http';
-import { Request, Response } from './Interfaces';
-import { RouteMeta } from './router/Common';
-import { ISessionStorage, SessionData } from './session/Session';
+import { RouteMeta } from './router';
 
 /**
  * HTTP server (bases on express.js)
@@ -30,55 +29,34 @@ export class HttpServer {
             typeof controller._routes !== 'object'
         ) {
             console.log(
-                `Error in controller "${controller.constructor.toString()}"`
+                `Error in controller "${controller.constructor.toString()}"`,
             );
             throw new Error(`Controller must be decorated by @Controller\n  and must contain at least one action`);
         }
 
-        const actions: RouteMeta[] = Object.keys(controller._routes).map(i => {
+        return Object.keys(controller._routes).map(i => {
             const item = controller._routes[i];
             if (item instanceof RouteMeta)
                 return item;
             else
                 throw new Error(`Route must be decorated by @Route`);
         });
-
-        return actions;
     }
 
     public express: express.Application;
     public server: http.Server;
-    public sessionStorage: ISessionStorage;
 
     constructor() {
+        this.server = http.createServer();
         this.express = express();
+        this.server.on('request', this.express);
         this.express.use(cookieParser());
-    }
-
-    public setSessionStorage(sessionKey: any, // (req: express.Request, res: express.Response, next: () => void) => void,
-                             storage: Type<ISessionStorage>) {
-        if (this.sessionStorage)
-            throw new Error('Session storage already exists');
-        if (Array.isArray(sessionKey))
-            this.express.use(...sessionKey);
-        else
-            this.express.use(sessionKey);
-
-        const sessionStorage = Injector.resolve<ISessionStorage>(storage);
-        this.sessionStorage  = sessionStorage;
-        this.express.use((req: Request, res: Response, next: () => void) => {
-            const data  = sessionStorage.get(req.session_id);
-            req.session = deepFreeze(data);
-            res.session = new SessionData(req.session);
-            res.on('finish', () => {
-                sessionStorage.set(req.session_id, res.session.getData(), data);
-            });
-            next();
-        });
+        this.express.use(bodyParser.json());
     }
 
     /**
      * Listen port
+     * TODO refactoring, tests
      * @param {number} port
      * @param {string} hostname
      * @return {Promise<void>}
@@ -88,11 +66,11 @@ export class HttpServer {
             this.express.all('*', (req, res) => {
                 res.status(404).send({
                     code   : -32601,
-                    message: 'Not Found'
+                    message: 'Not Found',
                 });
             });
 
-            this.server = this.express.listen(port, hostname, resolve);
+            this.server.listen(port, hostname, resolve);
 
             this.server.addListener('error', (e: any) => {
                 reject(e);
@@ -139,7 +117,15 @@ export class HttpServer {
      * @param controller Controller, decorated @Controller
      */
     public registerController(url: string | RegExp, controller: any): void {
-        const ctrl = Injector.resolve<any>(controller);
+        let ctrl: any;
+        try {
+            ctrl = Injector.resolve<any>(controller);
+        } catch (error) {
+            if (error.message === 'target is not a constructor')
+                ctrl = controller;
+            else
+                throw error;
+        }
 
         const actions = HttpServer.getControllerRoutes(ctrl);
 
